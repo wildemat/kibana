@@ -19,7 +19,6 @@ import {
 } from '@elastic/eui';
 import { FormattedMessage } from '@kbn/i18n-react';
 import type { CoreStart } from '@kbn/core/public';
-import type { IndexContent } from '@kbn/index-management-shared-types';
 
 const IndexMappingsDocsLink: FunctionComponent<{ docLinks: CoreStart['docLinks'] }> = ({
   docLinks,
@@ -67,8 +66,31 @@ const IndexMappingsDocsLink: FunctionComponent<{ docLinks: CoreStart['docLinks']
   );
 };
 
-export const createIndexMappingsDocsLinkContent = (core: CoreStart): IndexContent => {
+export const createIndexMappingsContentExtra = (core: CoreStart) => {
   return {
-    renderContent: () => <IndexMappingsDocsLink docLinks={core.docLinks} />,
+    renderText: () => (
+      <EuiText>
+        <p>
+          <FormattedMessage
+            id="xpack.serverlessSearch.indexMappings.ingestPipelinesDocs.description"
+            defaultMessage="Want to add custom fields, or use trained ML models to analyze and enrich your
+          indexed documents? Use index-specific ingest pipelines to customize documents to your needs."
+          />
+        </p>
+      </EuiText>
+    ),
+    renderLink: () => (
+      <EuiLink
+        data-test-subj="serverlessSearchIndexMappingsDocsLinkLearnMoreAboutIngestPipelinesLink"
+        href={core.docLinks.links.enterpriseSearch.ingestPipelines}
+        target="_blank"
+        external
+      >
+        <FormattedMessage
+          id="xpack.serverlessSearch.indexMappings.ingestPipelinesDocs.linkLabel"
+          defaultMessage="Learn more about ingest pipelines"
+        />
+      </EuiLink>
+    ),
   };
 };

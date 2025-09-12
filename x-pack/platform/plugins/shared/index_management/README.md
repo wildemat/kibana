@@ -1,12 +1,17 @@
 # Index Management UI
+
 ## Extensions service
-This service is exposed from the Index Management setup contract and can be used to add content to the indices list and the index details page. 
+
+This service is exposed from the Index Management setup contract and can be used to add content to the indices list and the index details page.
+
 ### Extensions to the indices list
+
 - `addBanner(banner: any)`: adds a banner on top of the indices list, for example when some indices run into an ILM issue
-- `addFilter(filter: any)`: adds a filter to the indices list, for example to filter indices managed by ILM 
+- `addFilter(filter: any)`: adds a filter to the indices list, for example to filter indices managed by ILM
 - `addToggle(toggle: any)`: adds a toggle to the indices list, for example to display hidden indices
 - `addColumn(column: IndicesListColumn)`: adds a column to the indices list, for example to display an ILM phase
 - `setEmptyListContent(content: EmptyListContent)`: replaces the default empty prompt displayed when there are no indices in the indices list. The empty list content has the following interface:
+
 ```ts
 export interface EmptyListContent {
   renderContent: (args: {
@@ -14,14 +19,16 @@ export interface EmptyListContent {
   }) => ReturnType<FunctionComponent>;
 }
 ```
+
 - `setIndexDetailsPageRoute`: registers a new route for index details page in indices list table. For example, for serverless search users, navigating to an index on the indices list page will lead to the Search Indices detail page.
 
-
 #### Extensions to the indices list and the index details page
+
 - `addAction(action: any)`: adds an option to the "manage index" menu, for example to add an ILM policy to the index
 - `addBadge(badge: any)`: adds a badge to the index name, for example to indicate frozen, rollup or follower indices
 
 #### Extensions to the index details page
+
 - `addIndexDetailsTab(tab: IndexDetailsTab)`: adds a tab to the index details page. The tab has the following interface:
 
 ```ts
@@ -45,7 +52,8 @@ interface IndexDetailsTab {
 
 An example of adding an ILM tab can be found in [this file](https://github.com/elastic/kibana/blob/main/x-pack/platform/plugins/private/index_lifecycle_management/public/extend_index_management/components/index_lifecycle_summary.tsx#L250).
 
-- `setIndexOverviewContent(content: IndexContent)`: replaces the default content in the overview tab (code block describing adding documents to the index) with the custom content. The custom content has the following interface: 
+- `setIndexOverviewContent(content: IndexContent)`: replaces the default content in the overview tab (code block describing adding documents to the index) with the custom content. The custom content has the following interface:
+
 ```ts
 interface IndexContent {
   renderContent: (args: {
@@ -53,14 +61,17 @@ interface IndexContent {
     getUrlForApp: ApplicationStart['getUrlForApp'];
   }) => ReturnType<FunctionComponent>;
 ```
-- `setIndexMappingsContent(content: IndexContent)`: adds content to the mappings tab of the index details page. The content is displayed in the right bottom corner, below the mappings docs link. 
+
+- `setIndexMappingsContentAbout(content: IndexMappingContent)`: sets the mappings description text and link to the proper documentation.
+- `setIndexMappingsContentExtra(content: IndexMappingContent)`: adds more content to the mappings tab of the index details page. The content is displayed in the right bottom corner, below the mappings docs link.
 
 ## Index data enrichers
+
 The extensions service that allows to render additional UI elements in the indices list and on the index details page often
-relies on additional index data that is not available by default. To make these additional data available in the response of 
+relies on additional index data that is not available by default. To make these additional data available in the response of
 the `GET /indices` request, an index data enricher can be registered. A data enricher is essentially an extra request that is
-done for the array of indices and the information is added to the response. Currently, 3 data enrichers are registered 
-by the ILM, Rollup and CCR plugins. Before adding a data enricher, the cost of the additional request should be taken 
+done for the array of indices and the information is added to the response. Currently, 3 data enrichers are registered
+by the ILM, Rollup and CCR plugins. Before adding a data enricher, the cost of the additional request should be taken
 in consideration (see [this file](https://github.com/elastic/kibana/blob/main/x-pack/platform/plugins/shared/index_management/server/services/index_data_enricher.ts) for more details).
 
 ## Indices tab

@@ -14,6 +14,7 @@ import type {
   IndexContent,
   ExtensionsSetup,
   IndexDetailsPageRoute,
+  IndexMappingContent,
 } from '@kbn/index-management-shared-types';
 import type { IndexDetailsTab } from '../../common/constants';
 
@@ -48,7 +49,8 @@ export class ExtensionsService {
   private _emptyListContent: EmptyListContent | null = null;
   private _indexDetailsTabs: IndexDetailsTab[] = [];
   private _indexOverviewContent: IndexContent | null = null;
-  private _indexMappingsContent: IndexContent | null = null;
+  private _indexMappingsContentAbout: IndexMappingContent | null = null;
+  private _indexMappingsContentExtra: IndexMappingContent | null = null;
   private _indexDetailsPageRoute: IndexDetailsPageRoute | null = null;
   private service?: ExtensionsSetup;
 
@@ -63,7 +65,8 @@ export class ExtensionsService {
       setEmptyListContent: this.setEmptyListContent.bind(this),
       addIndexDetailsTab: this.addIndexDetailsTab.bind(this),
       setIndexOverviewContent: this.setIndexOverviewContent.bind(this),
-      setIndexMappingsContent: this.setIndexMappingsContent.bind(this),
+      setIndexMappingsContentAbout: this.setIndexMappingsContentAbout.bind(this),
+      setIndexMappingsContentExtra: this.setIndexMappingsContentExtra.bind(this),
       setIndexDetailsPageRoute: this.setIndexDetailsPageRoute.bind(this),
     };
 
@@ -114,13 +117,22 @@ export class ExtensionsService {
     }
   }
 
-  private setIndexMappingsContent(content: IndexContent) {
-    if (this._indexMappingsContent) {
-      throw new Error(`The content for index mappings has already been set.`);
+  private setIndexMappingsContentAbout(content: IndexMappingContent) {
+    if (this._indexMappingsContentAbout) {
+      throw new Error(`The about content for index mappings has already been set.`);
     } else {
-      this._indexMappingsContent = content;
+      this._indexMappingsContentAbout = content;
     }
   }
+
+  private setIndexMappingsContentExtra(content: IndexMappingContent) {
+    if (this._indexMappingsContentExtra) {
+      throw new Error(`The extra content for index mappings has already been set.`);
+    } else {
+      this._indexMappingsContentExtra = content;
+    }
+  }
+
   private setIndexDetailsPageRoute(route: IndexDetailsPageRoute) {
     if (this._indexDetailsPageRoute) {
       throw new Error(`The route for index details has already been set.`);
@@ -165,8 +177,11 @@ export class ExtensionsService {
     return this._indexOverviewContent;
   }
 
-  public get indexMappingsContent() {
-    return this._indexMappingsContent;
+  public get indexMappingsContentAbout() {
+    return this._indexMappingsContentAbout;
+  }
+  public get indexMappingsContentExtra() {
+    return this._indexMappingsContentExtra;
   }
   public get indexDetailsPageRoute() {
     return this._indexDetailsPageRoute;

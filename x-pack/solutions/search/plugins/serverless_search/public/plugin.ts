@@ -12,7 +12,7 @@ import { appCategories, appIds } from '@kbn/management-cards-navigation';
 import type { AuthenticatedUser } from '@kbn/security-plugin/common';
 import { QueryClient, MutationCache, QueryCache } from '@tanstack/react-query';
 import { of } from 'rxjs';
-import { createIndexMappingsDocsLinkContent as createIndexMappingsContent } from './application/components/index_management/index_mappings_docs_link';
+import { createIndexMappingsContentExtra } from './application/components/index_management/index_mappings_docs_link';
 import { createIndexOverviewContent } from './application/components/index_management/index_overview_content';
 import { docLinks } from '../common/doc_links';
 import type {
@@ -189,8 +189,13 @@ export class ServerlessSearchPlugin
       hideLinksTo: [appIds.MAINTENANCE_WINDOWS],
       extendCardNavDefinitions,
     });
-
-    indexManagement?.extensionsService.setIndexMappingsContent(createIndexMappingsContent(core));
+    indexManagement?.extensionsService.setIndexMappingsContentExtra(
+      createIndexMappingsContentExtra(core)
+    );
+    // indexManagement?.extensionsService.setIndexMappingsContentAbout(
+    //   // createIndexMappingsContentExtra(core)
+    //   null
+    // );
     indexManagement?.extensionsService.setIndexOverviewContent(
       createIndexOverviewContent(core, services)
     );

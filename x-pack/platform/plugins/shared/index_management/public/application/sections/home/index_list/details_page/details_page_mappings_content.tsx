@@ -33,6 +33,7 @@ import type { FunctionComponent } from 'react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ILicense } from '@kbn/licensing-types';
 import { useUnsavedChangesPrompt } from '@kbn/unsaved-changes-prompt';
+import type { IndexMappingContent } from '@kbn/index-management-shared-types';
 import {
   getStateWithCopyToFields,
   isSemanticTextField,
@@ -69,6 +70,107 @@ import { EmptyMappingsContent } from './details_page_empty_mappings';
 
 const isInferencePreconfigured = (inferenceId: string) => inferenceId.startsWith('.');
 
+const MappingsAboutContent = (props: IndexMappingContent) => {
+  return (
+    <EuiPanel grow={false} paddingSize="l" color="subdued">
+      <EuiFlexGroup alignItems="center" gutterSize="s">
+        <EuiFlexItem grow={false}>
+          <EuiIcon type="info" />
+        </EuiFlexItem>
+        <EuiFlexItem>
+          <EuiTitle size="xs">
+            <h2>
+              <FormattedMessage
+                id="xpack.idxMgmt.indexDetails.mappings.docsCardTitle"
+                defaultMessage="About index mappings"
+              />
+            </h2>
+          </EuiTitle>
+        </EuiFlexItem>
+      </EuiFlexGroup>
+      <EuiSpacer size="s" />
+      {props?.renderText ? (
+        props.renderText()
+      ) : (
+        <EuiText>
+          <p>
+            <FormattedMessage
+              id="xpack.idxMgmt.indexDetails.mappings.docsCardDescription"
+              defaultMessage="Your documents are made up of a set of fields. Index mappings give each field a type
+                      (such as keyword, number, or date) and additional subfields. These index mappings determine the functions
+                      available in your relevance tuning and search experience."
+            />
+          </p>
+        </EuiText>
+      )}
+      <EuiSpacer size="m" />
+      {props?.renderLink ? (
+        props.renderLink()
+      ) : (
+        <EuiLink
+          data-test-subj="indexDetailsMappingsDocsLink"
+          href={documentationService.getMappingDocumentationLink()}
+          target="_blank"
+          external
+        >
+          <FormattedMessage
+            id="xpack.idxMgmt.indexDetails.mappings.docsCardLink"
+            defaultMessage="Learn more about mappings"
+          />
+        </EuiLink>
+      )}
+    </EuiPanel>
+  );
+};
+
+const MappingsExtraContent = (props: IndexMappingContent) => (
+  <EuiPanel grow={false} hasShadow={false} hasBorder>
+    <EuiFlexGroup justifyContent="center" gutterSize="s" alignItems="center">
+      <EuiFlexItem grow={false}>
+        <EuiIcon type="info" />
+      </EuiFlexItem>
+      <EuiFlexItem>
+        <EuiTitle size="xs">
+          <h3>
+            {i18n.translate('xpack.enterpriseSearch.content.searchIndex.transform.title', {
+              defaultMessage: 'Transform your searchable content',
+            })}
+          </h3>
+        </EuiTitle>
+      </EuiFlexItem>
+    </EuiFlexGroup>
+
+    <EuiSpacer size="s" />
+    {props?.renderText ? (
+      props.renderText()
+    ) : (
+      <EuiText size="s">
+        <p>
+          <FormattedMessage
+            id="xpack.enterpriseSearch.content.searchIndex.transform.description"
+            defaultMessage="Want to add custom fields, or use trained ML models to analyze and enrich your indexed documents? Use index-specific ingest pipelines to customize documents to your needs."
+          />
+        </p>
+      </EuiText>
+    )}
+    <EuiSpacer size="s" />
+    {props?.renderLink ? (
+      props.renderLink()
+    ) : (
+      <EuiLink
+        data-test-subj="enterpriseSearchSearchIndexIndexMappingsLearnMoreLink"
+        href={documentationService.docLinks.enterpriseSearch.ingestPipelines}
+        target="_blank"
+        external
+      >
+        {i18n.translate('xpack.enterpriseSearch.content.searchIndex.transform.docLink', {
+          defaultMessage: 'Learn more',
+        })}
+      </EuiLink>
+    )}
+  </EuiPanel>
+);
+
 export const DetailsPageMappingsContent: FunctionComponent<{
   index: Index;
   data: string;
@@ -90,6 +192,8 @@ export const DetailsPageMappingsContent: FunctionComponent<{
     history,
   } = useAppContext();
   const pendingFieldsRef = useRef<HTMLDivElement>(null);
+  const showAboutContent = extensionsService.indexMappingsContentAbout !== undefined;
+  const showExtraContent = extensionsService.indexMappingsContentExtra !== undefined;
 
   const [isPlatinumLicense, setIsPlatinumLicense] = useState<boolean>(false);
   useEffect(() => {
@@ -472,7 +576,23 @@ export const DetailsPageMappingsContent: FunctionComponent<{
     // using "rowReverse" to keep docs links on the top of the mappings code block on smaller screen
     <>
       <EuiFlexGroup wrap direction="rowReverse" css={mappingsWrapperStyles}>
-        {showAboutMappings && (
+        {hasMappings && showAboutContent && (
+          <EuiFlexItem grow={false} css={showAboutMappingsStyles}>
+            <MappingsAboutContent
+              renderText={extensionsService.indexMappingsContentAbout?.renderText}
+              renderLink={extensionsService.indexMappingsContentAbout?.renderLink}
+            />
+          </EuiFlexItem>
+        )}
+        {hasMappings && showExtraContent && (
+          <EuiFlexItem grow={false} css={showAboutMappingsStyles}>
+            <MappingsExtraContent
+              renderText={extensionsService.indexMappingsContentExtra?.renderText}
+              renderLink={extensionsService.indexMappingsContentExtra?.renderLink}
+            />
+          </EuiFlexItem>
+        )}
+        {/* {showAboutMappings && (
           <EuiFlexItem grow={false} css={showAboutMappingsStyles}>
             <EuiPanel grow={false} paddingSize="l" color="subdued">
               <EuiFlexGroup alignItems="center" gutterSize="s">
@@ -521,7 +641,7 @@ export const DetailsPageMappingsContent: FunctionComponent<{
               </>
             )}
           </EuiFlexItem>
-        )}
+        )} */}
         <EuiFlexGroup direction="column" gutterSize="s">
           {!hasMappings &&
             (!isAddingFields ? (

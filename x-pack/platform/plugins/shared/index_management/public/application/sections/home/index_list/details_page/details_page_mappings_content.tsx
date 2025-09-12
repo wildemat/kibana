@@ -25,6 +25,7 @@ import {
   useGeneratedHtmlId,
   useEuiBreakpoint,
   EuiToolTip,
+  EuiCode,
 } from '@elastic/eui';
 import { css } from '@emotion/react';
 import { i18n } from '@kbn/i18n';
@@ -33,6 +34,7 @@ import type { FunctionComponent } from 'react';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import type { ILicense } from '@kbn/licensing-types';
 import { useUnsavedChangesPrompt } from '@kbn/unsaved-changes-prompt';
+import type { IndexMappingLearnMoreLink } from '@kbn/index-management-shared-types';
 import {
   getStateWithCopyToFields,
   isSemanticTextField,
@@ -68,6 +70,83 @@ import { parseMappings } from '../../../../shared/parse_mappings';
 import { EmptyMappingsContent } from './details_page_empty_mappings';
 
 const isInferencePreconfigured = (inferenceId: string) => inferenceId.startsWith('.');
+
+const DefaultAboutContent = ({ documentationLink }: { documentationLink: string }) => {
+  return (
+    <EuiPanel grow={false} paddingSize="l" color="subdued">
+      <EuiFlexGroup alignItems="center" gutterSize="s">
+        <EuiFlexItem grow={false}>
+          <EuiIcon type="info" />
+        </EuiFlexItem>
+        <EuiFlexItem>
+          <EuiTitle size="xs">
+            <h2>
+              <FormattedMessage
+                id="xpack.idxMgmt.indexDetails.mappings.docsCardTitle"
+                defaultMessage="About index mappings"
+              />
+            </h2>
+          </EuiTitle>
+        </EuiFlexItem>
+      </EuiFlexGroup>
+      <EuiSpacer size="s" />
+      <EuiText>
+        <p>
+          <FormattedMessage
+            id="xpack.idxMgmt.indexDetails.mappings.docsCardDescription"
+            defaultMessage="Your documents are made up of a set of fields. Index mappings give each field a type
+                      (such as keyword, number, or date) and additional subfields. These index mappings determine the functions
+                      available in your relevance tuning and search experience."
+          />
+        </p>
+      </EuiText>
+      <EuiSpacer size="m" />
+      <EuiLink
+        data-test-subj="indexDetailsMappingsDocsLink"
+        href={documentationLink}
+        target="_blank"
+        external
+      >
+        <FormattedMessage
+          id="xpack.idxMgmt.indexDetails.mappings.docsCardLink"
+          defaultMessage="Learn more about mappings"
+        />
+      </EuiLink>
+    </EuiPanel>
+  );
+};
+
+const LearnMoreContent = ({ link }: { link: IndexMappingLearnMoreLink }) => (
+  <EuiPanel grow={false} paddingSize="l">
+    <EuiFlexGroup alignItems="center" gutterSize="s">
+      <EuiFlexItem grow={false}>
+        <EuiIcon type="info" />
+      </EuiFlexItem>
+      <EuiFlexItem>
+        <EuiTitle size="xs">
+          <h2>
+            <FormattedMessage
+              id="xpack.serverlessSearch.indexMappings.ingestPipelinesDocs.title"
+              defaultMessage="Transform your searchable content"
+            />
+          </h2>
+        </EuiTitle>
+      </EuiFlexItem>
+    </EuiFlexGroup>
+    <EuiSpacer size="s" />
+    <EuiText>
+      <p>
+        <FormattedMessage
+          id="xpack.serverlessSearch.indexMappings.ingestPipelinesDocs.description"
+          defaultMessage="Want to add custom fields, or use trained ML models to analyze and enrich your
+          indexed documents? Use index-specific ingest pipelines to customize documents to your needs."
+        />
+      </p>
+    </EuiText>
+    <EuiSpacer size="m" />
+    {link}
+  </EuiPanel>
+);
 
 export const DetailsPageMappingsContent: FunctionComponent<{
   index: Index;
@@ -472,7 +551,27 @@ export const DetailsPageMappingsContent: FunctionComponent<{
     // using "rowReverse" to keep docs links on the top of the mappings code block on smaller screen
     <>
       <EuiFlexGroup wrap direction="rowReverse" css={mappingsWrapperStyles}>
-        {showAboutMappings && (
+        <EuiFlexItem grow={false} css={showAboutMappingsStyles}>
+          <EuiCode>Show About {`${showAboutMappings}`}</EuiCode>
+        </EuiFlexItem>
+
+        {extensionsService.indexMappingsContentAbout && (
+          <EuiFlexItem grow={false} css={showAboutMappingsStyles}>
+            <EuiText>About Content:</EuiText>
+            <EuiSpacer />
+            {extensionsService.indexMappingsContentAbout?.renderContent({ index, getUrlForApp })}
+          </EuiFlexItem>
+        )}
+
+        {extensionsService.indexMappingsLearnMoreLink && (
+          <EuiFlexItem grow={false} css={showAboutMappingsStyles}>
+            <EuiText>Extra Content:</EuiText>
+            <EuiSpacer />
+            <LearnMoreContent link={extensionsService.indexMappingsLearnMoreLink} />
+            {/* {extensionsService.indexMappingsContentAbout?.renderContent({ index, getUrlForApp })} */}
+          </EuiFlexItem>
+        )}
+        {/* {showAboutMappings && (
           <EuiFlexItem grow={false} css={showAboutMappingsStyles}>
             <EuiPanel grow={false} paddingSize="l" color="subdued">
               <EuiFlexGroup alignItems="center" gutterSize="s">
@@ -521,7 +620,7 @@ export const DetailsPageMappingsContent: FunctionComponent<{
               </>
             )}
           </EuiFlexItem>
-        )}
+        )} */}
         <EuiFlexGroup direction="column" gutterSize="s">
           {!hasMappings &&
             (!isAddingFields ? (

@@ -239,8 +239,13 @@ export class IndexMgmtUIPlugin
     this.licensingSubscription = licensing?.license$.subscribe((next) => {
       this.canUseSyntheticSource = next.hasAtLeast('enterprise');
     });
+    const extensionsApi = this.extensionsService.setup();
+    // extensionsApi.setIndexMappingsContent({
+    //   renderContent: () => 'HI bro',
+    // });
+
     return {
-      extensionsService: this.extensionsService.setup(),
+      extensionsService: extensionsApi,
       getIndexMappingComponent: (deps: { history: ScopedHistory<unknown> }) => {
         return (props: IndexMappingProps) => {
           return IndexMapping({

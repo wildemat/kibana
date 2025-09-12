@@ -189,8 +189,8 @@ export class ServerlessSearchPlugin
       hideLinksTo: [appIds.MAINTENANCE_WINDOWS],
       extendCardNavDefinitions,
     });
-
-    indexManagement?.extensionsService.setIndexMappingsContent(createIndexMappingsContent(core));
+    const link = createIndexMappingsContent(core);
+    indexManagement?.extensionsService.setIndexMappingsLearnMoreLink(link);
     indexManagement?.extensionsService.setIndexOverviewContent(
       createIndexOverviewContent(core, services)
     );

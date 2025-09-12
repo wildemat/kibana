@@ -5,7 +5,7 @@
  * 2.0.
  */
 
-import type { FunctionComponent, ReactNode } from 'react';
+import type { FunctionComponent, ReactElement, ReactNode } from 'react';
 import type { ApplicationStart } from '@kbn/core-application-browser';
 import type { EuiBadgeProps } from '@elastic/eui';
 import type { IndexDetailsTab } from '../home_sections';
@@ -18,6 +18,7 @@ export interface IndexContent {
   }) => ReturnType<FunctionComponent>;
 }
 
+export type IndexMappingLearnMoreLink = ReactElement;
 export interface IndexToggle {
   matchIndex: (index: Index) => boolean;
   label: string;
@@ -69,8 +70,10 @@ export interface ExtensionsSetup {
   addIndexDetailsTab(tab: IndexDetailsTab): void;
   // sets content to render instead of the code block on the overview tab of the index page
   setIndexOverviewContent(content: IndexContent): void;
-  // sets content to render below the docs link on the mappings tab of the index page
-  setIndexMappingsContent(content: IndexContent): void;
+  // sets content to render on the right side of the mappings tab of the index page
+  setIndexMappingsAboutContent(content: IndexContent): void;
+  // sets the "learn more" link for the extra content below the docs link on the mappings tab of the index page
+  setIndexMappingsLearnMoreLink(link: IndexMappingLearnMoreLink): void;
   // sets index details page route
   setIndexDetailsPageRoute(route: IndexDetailsPageRoute, detailsTabId?: string): void;
 }

@@ -192,10 +192,6 @@ export class ServerlessSearchPlugin
     indexManagement?.extensionsService.setIndexMappingsContentExtra(
       createIndexMappingsContentExtra(core)
     );
-    // indexManagement?.extensionsService.setIndexMappingsContentAbout(
-    //   // createIndexMappingsContentExtra(core)
-    //   null
-    // );
     indexManagement?.extensionsService.setIndexOverviewContent(
       createIndexOverviewContent(core, services)
     );

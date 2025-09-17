@@ -23,7 +23,7 @@ export type IndexMappingContent =
       renderText?: () => ReactElement;
       renderLink?: () => ReactElement;
     }
-  | undefined;
+  | false;
 export interface IndexToggle {
   matchIndex: (index: Index) => boolean;
   label: string;

@@ -25,6 +25,10 @@ import { useKibanaContextForPluginProvider } from './utils/use_kibana';
 import { AppContextProvider } from './app_context';
 import { PLUGIN_ID } from '../common/constants';
 import { mountFlashMessagesLogic } from './components/shared/flash_messages';
+import {
+  createConnectorMappingAboutContent,
+  createConnectorMappingExtraContent,
+} from './components/search_index/index_mappings';
 
 export const renderApp = (
   core: CoreStart,
@@ -103,6 +107,12 @@ const AppWithExecutionContext = ({
   const indexMappingComponent = plugins.indexManagement?.getIndexMappingComponent({
     history: params.history,
   });
+  plugins.indexManagement?.extensionsService.setIndexMappingsContentExtra(
+    createConnectorMappingExtraContent()
+  );
+  plugins.indexManagement?.extensionsService.setIndexMappingsContentAbout(
+    createConnectorMappingAboutContent()
+  );
 
   const appContext = {
     connectorTypes,

@@ -25,6 +25,7 @@ import {
   useGeneratedHtmlId,
   useEuiBreakpoint,
   EuiToolTip,
+  EuiCode,
 } from '@elastic/eui';
 import { css } from '@emotion/react';
 import { i18n } from '@kbn/i18n';
@@ -70,9 +71,13 @@ import { EmptyMappingsContent } from './details_page_empty_mappings';
 
 const isInferencePreconfigured = (inferenceId: string) => inferenceId.startsWith('.');
 
-const MappingsAboutContent = (props: IndexMappingContent) => {
+interface MappingsContentProps {
+  content: IndexMappingContent | null;
+}
+
+const MappingsAboutContent = ({ content }: MappingsContentProps) => {
   return (
-    <EuiPanel grow={false} paddingSize="l" color="subdued">
+    <EuiPanel grow={false} paddingSize="l" hasShadow={false} hasBorder>
       <EuiFlexGroup alignItems="center" gutterSize="s">
         <EuiFlexItem grow={false}>
           <EuiIcon type="info" />
@@ -89,23 +94,28 @@ const MappingsAboutContent = (props: IndexMappingContent) => {
         </EuiFlexItem>
       </EuiFlexGroup>
       <EuiSpacer size="s" />
-      {props?.renderText ? (
-        props.renderText()
-      ) : (
-        <EuiText>
-          <p>
+      <EuiText>
+        <p>
+          {content && content.renderText ? (
+            content.renderText()
+          ) : (
             <FormattedMessage
-              id="xpack.idxMgmt.indexDetails.mappings.docsCardDescription"
-              defaultMessage="Your documents are made up of a set of fields. Index mappings give each field a type
-                      (such as keyword, number, or date) and additional subfields. These index mappings determine the functions
-                      available in your relevance tuning and search experience."
+              id="xpack.enterpriseSearch.content.searchIndex.mappings.description"
+              defaultMessage="Your documents are made up of a set of fields. Index mappings give each field a type 
+                (such as {keyword}, {number}, or {date}) and additional subfields. These index mappings determine the functions
+                available in your relevance tuning and search experience."
+              values={{
+                date: <EuiCode>date</EuiCode>,
+                keyword: <EuiCode>keyword</EuiCode>,
+                number: <EuiCode>number</EuiCode>,
+              }}
             />
-          </p>
-        </EuiText>
-      )}
+          )}
+        </p>
+      </EuiText>
       <EuiSpacer size="m" />
-      {props?.renderLink ? (
-        props.renderLink()
+      {content && content.renderLink ? (
+        content.renderLink()
       ) : (
         <EuiLink
           data-test-subj="indexDetailsMappingsDocsLink"
@@ -123,49 +133,53 @@ const MappingsAboutContent = (props: IndexMappingContent) => {
   );
 };
 
-const MappingsExtraContent = (props: IndexMappingContent) => (
-  <EuiPanel grow={false} hasShadow={false} hasBorder>
-    <EuiFlexGroup justifyContent="center" gutterSize="s" alignItems="center">
+const MappingsExtraContent = ({ content }: MappingsContentProps) => (
+  <EuiPanel grow={false} paddingSize="l" hasShadow={false} hasBorder>
+    <EuiFlexGroup gutterSize="s" alignItems="center">
       <EuiFlexItem grow={false}>
         <EuiIcon type="info" />
       </EuiFlexItem>
       <EuiFlexItem>
         <EuiTitle size="xs">
           <h3>
-            {i18n.translate('xpack.enterpriseSearch.content.searchIndex.transform.title', {
-              defaultMessage: 'Transform your searchable content',
-            })}
+            <FormattedMessage
+              id="xpack.idxMgmt.indexDetails.mappings.transform.title"
+              defaultMessage="Transform your searchable content"
+            />
           </h3>
         </EuiTitle>
       </EuiFlexItem>
     </EuiFlexGroup>
 
     <EuiSpacer size="s" />
-    {props?.renderText ? (
-      props.renderText()
-    ) : (
-      <EuiText size="s">
-        <p>
+    <EuiText>
+      <p>
+        {content && content.renderText ? (
+          content.renderText()
+        ) : (
           <FormattedMessage
-            id="xpack.enterpriseSearch.content.searchIndex.transform.description"
-            defaultMessage="Want to add custom fields, or use trained ML models to analyze and enrich your indexed documents? Use index-specific ingest pipelines to customize documents to your needs."
+            id="xpack.idxMgmt.indexDetails.mappings.transform.description"
+            defaultMessage="Want to add custom fields, or use trained ML models 
+            to analyze and enrich your indexed documents? Use index-specific ingest pipelines 
+            to customize documents to your needs."
           />
-        </p>
-      </EuiText>
-    )}
+        )}
+      </p>
+    </EuiText>
     <EuiSpacer size="s" />
-    {props?.renderLink ? (
-      props.renderLink()
+    {content && content.renderLink ? (
+      content.renderLink()
     ) : (
       <EuiLink
-        data-test-subj="enterpriseSearchSearchIndexIndexMappingsLearnMoreLink"
+        data-test-subj="indexDetailsMappingsLearnMoreLink"
         href={documentationService.docLinks.enterpriseSearch.ingestPipelines}
         target="_blank"
         external
       >
-        {i18n.translate('xpack.enterpriseSearch.content.searchIndex.transform.docLink', {
-          defaultMessage: 'Learn more',
-        })}
+        <FormattedMessage
+          id="xpack.idxMgmt.indexDetails.mappings.transform.docLink"
+          defaultMessage="Learn more"
+        />
       </EuiLink>
     )}
   </EuiPanel>
@@ -182,7 +196,6 @@ export const DetailsPageMappingsContent: FunctionComponent<{
   const {
     services: { extensionsService },
     core: {
-      getUrlForApp,
       application: { capabilities, navigateToUrl },
       http,
     },
@@ -192,9 +205,8 @@ export const DetailsPageMappingsContent: FunctionComponent<{
     history,
   } = useAppContext();
   const pendingFieldsRef = useRef<HTMLDivElement>(null);
-  const showAboutContent = extensionsService.indexMappingsContentAbout !== undefined;
-  const showExtraContent = extensionsService.indexMappingsContentExtra !== undefined;
-
+  const showAboutContent = extensionsService.indexMappingsContentAbout !== false;
+  const showExtraContent = extensionsService.indexMappingsContentExtra !== false;
   const [isPlatinumLicense, setIsPlatinumLicense] = useState<boolean>(false);
   useEffect(() => {
     const subscription = licensing?.license$.subscribe((license: ILicense) => {
@@ -576,73 +588,31 @@ export const DetailsPageMappingsContent: FunctionComponent<{
     // using "rowReverse" to keep docs links on the top of the mappings code block on smaller screen
     <>
       <EuiFlexGroup wrap direction="rowReverse" css={mappingsWrapperStyles}>
-        {hasMappings && showAboutContent && (
+        {hasMappings && (
           <EuiFlexItem grow={false} css={showAboutMappingsStyles}>
-            <MappingsAboutContent
-              renderText={extensionsService.indexMappingsContentAbout?.renderText}
-              renderLink={extensionsService.indexMappingsContentAbout?.renderLink}
-            />
-          </EuiFlexItem>
-        )}
-        {hasMappings && showExtraContent && (
-          <EuiFlexItem grow={false} css={showAboutMappingsStyles}>
-            <MappingsExtraContent
-              renderText={extensionsService.indexMappingsContentExtra?.renderText}
-              renderLink={extensionsService.indexMappingsContentExtra?.renderLink}
-            />
-          </EuiFlexItem>
-        )}
-        {/* {showAboutMappings && (
-          <EuiFlexItem grow={false} css={showAboutMappingsStyles}>
-            <EuiPanel grow={false} paddingSize="l" color="subdued">
-              <EuiFlexGroup alignItems="center" gutterSize="s">
+            <EuiFlexGroup direction="column">
+              {showAboutContent && (
                 <EuiFlexItem grow={false}>
-                  <EuiIcon type="info" />
+                  <MappingsAboutContent content={extensionsService.indexMappingsContentAbout} />
                 </EuiFlexItem>
-                <EuiFlexItem>
-                  <EuiTitle size="xs">
-                    <h2>
-                      <FormattedMessage
-                        id="xpack.idxMgmt.indexDetails.mappings.docsCardTitle"
-                        defaultMessage="About index mappings"
-                      />
-                    </h2>
-                  </EuiTitle>
+              )}
+              {showExtraContent && (
+                <EuiFlexItem grow={false}>
+                  <MappingsExtraContent content={extensionsService.indexMappingsContentExtra} />
                 </EuiFlexItem>
-              </EuiFlexGroup>
-              <EuiSpacer size="s" />
-              <EuiText>
-                <p>
-                  <FormattedMessage
-                    id="xpack.idxMgmt.indexDetails.mappings.docsCardDescription"
-                    defaultMessage="Your documents are made up of a set of fields. Index mappings give each field a type
-                      (such as keyword, number, or date) and additional subfields. These index mappings determine the functions
-                      available in your relevance tuning and search experience."
-                  />
-                </p>
-              </EuiText>
-              <EuiSpacer size="m" />
-              <EuiLink
-                data-test-subj="indexDetailsMappingsDocsLink"
-                href={documentationService.getMappingDocumentationLink()}
-                target="_blank"
-                external
-              >
-                <FormattedMessage
-                  id="xpack.idxMgmt.indexDetails.mappings.docsCardLink"
-                  defaultMessage="Learn more about mappings"
-                />
-              </EuiLink>
-            </EuiPanel>
-            {extensionsService.indexMappingsContent && (
-              <>
-                <EuiSpacer />
-                {extensionsService.indexMappingsContent.renderContent({ index, getUrlForApp })}
-              </>
-            )}
+              )}
+            </EuiFlexGroup>
           </EuiFlexItem>
-        )} */}
+        )}
         <EuiFlexGroup direction="column" gutterSize="s">
+          {hasMLPermissions && !hasSemanticText && (
+            <EuiFlexItem grow={true}>
+              <SemanticTextBanner
+                isSemanticTextEnabled={isSemanticTextEnabled}
+                isPlatinumLicense={isPlatinumLicense}
+              />
+            </EuiFlexItem>
+          )}
           {!hasMappings &&
             (!isAddingFields ? (
               <EmptyMappingsContent addFieldButton={AddFieldButton} />
@@ -704,14 +674,6 @@ export const DetailsPageMappingsContent: FunctionComponent<{
                 </EuiFilterGroup>
               </EuiFlexItem>
             </EuiFlexGroup>
-          )}
-          {hasMLPermissions && !hasSemanticText && (
-            <EuiFlexItem grow={true}>
-              <SemanticTextBanner
-                isSemanticTextEnabled={isSemanticTextEnabled}
-                isPlatinumLicense={isPlatinumLicense}
-              />
-            </EuiFlexItem>
           )}
           {errorSavingMappings}
           {isAddingFields && (

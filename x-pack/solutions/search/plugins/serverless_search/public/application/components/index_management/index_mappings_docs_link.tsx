@@ -26,7 +26,6 @@ export const createIndexMappingsContentExtra = (core: CoreStart) => {
         target="_blank"
         external
       >
-        svls search version
         <FormattedMessage
           id="xpack.serverlessSearch.indexMappings.ingestPipelinesDocs.linkLabel"
           defaultMessage="Learn more about ingest pipelines"

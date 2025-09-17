@@ -139,7 +139,6 @@ export const SearchIndexIndexMappings: React.FC = () => {
                 </EuiCallOut>
               ) : (
                 <>
-                  stack content connectors
                   {IndexMappingComponent ? (
                     <IndexMappingComponent
                       index={{

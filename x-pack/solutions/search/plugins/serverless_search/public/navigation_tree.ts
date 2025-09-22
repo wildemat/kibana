@@ -167,6 +167,15 @@ export const navigationTree = ({ isAppRegistered }: ApplicationStart): Navigatio
                 breadcrumbStatus: 'hidden' as 'hidden',
                 iconV2: 'broom' /* TODO: review icon */,
               }),
+              ...isAvailable('learningFlow', {
+                id: 'learningFlow',
+                title: i18n.translate('xpack.serverlessSearch.nav.build.learningFlow', {
+                  defaultMessage: 'Learning Flow',
+                }),
+                link: 'learningFlow' as AppDeepLinkId,
+                breadcrumbStatus: 'hidden' as 'hidden',
+                iconV2: 'training',
+              }),
             ],
           },
           {

@@ -38,6 +38,7 @@
       "contentConnectors",
       "searchInferenceEndpoints",
       "searchPlayground",
+      "learningFlow",
       "usageCollection"
     ],
     "requiredBundles": [

@@ -1,0 +1,28 @@
+{
+  "type": "plugin",
+  "id": "@kbn/learning-flow",
+  "owner": "@elastic/search-kibana",
+  "group": "search",
+  "visibility": "private",
+  "plugin": {
+    "id": "learningFlow",
+    "server": true,
+    "browser": true,
+    "configPath": [
+      "xpack",
+      "learningFlow"
+    ],
+    "requiredPlugins": [
+      "share"
+    ],
+    "optionalPlugins": [
+      "cloud",
+      "console",
+      "searchNavigation",
+      "usageCollection"
+    ],
+    "requiredBundles": [
+      "kibanaReact"
+    ]
+  }
+}

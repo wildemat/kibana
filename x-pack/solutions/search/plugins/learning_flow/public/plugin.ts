@@ -17,6 +17,7 @@ import type {
   LearningFlowPluginStartDependencies,
   LearningFlowServicesContextDeps,
 } from './types';
+import { ValidationService } from './services';
 
 export class LearningFlowPlugin
   implements
@@ -27,9 +28,11 @@ export class LearningFlowPlugin
       LearningFlowPluginStartDependencies
     >
 {
+  private readonly validationService = new ValidationService();
   public setup(
     core: CoreSetup<LearningFlowPluginStartDependencies, LearningFlowPluginStart>
   ): LearningFlowPluginSetup {
+    const validation = this.validationService.setup();
     core.application.register({
       id: PLUGIN_ID,
       appRoute: '/app/elasticsearch/learning-flow',
@@ -45,6 +48,7 @@ export class LearningFlowPlugin
         const startDeps: LearningFlowServicesContextDeps = {
           ...depsStart,
           history,
+          validation,
         };
 
         return renderApp(coreStart, startDeps, element);
@@ -53,11 +57,17 @@ export class LearningFlowPlugin
       visibleIn: ['globalSearch', 'sideNav'],
     });
 
-    return {};
+    return {
+      validation,
+    };
   }
 
   public start(core: CoreStart): LearningFlowPluginStart {
-    return {};
+    const validation = this.validationService.setup();
+    
+    return {
+      validation,
+    };
   }
 }
 

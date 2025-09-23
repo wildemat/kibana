@@ -6476,6 +6476,10 @@
   version "0.0.0"
   uid ""
 
+"@kbn/learning-flow@link:x-pack/solutions/search/plugins/learning_flow":
+  version "0.0.0"
+  uid ""
+
 "@kbn/lens-config-builder-example-plugin@link:x-pack/examples/lens_config_builder_example":
   version "0.0.0"
   uid ""

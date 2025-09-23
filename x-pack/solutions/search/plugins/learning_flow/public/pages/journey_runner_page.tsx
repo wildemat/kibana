@@ -20,6 +20,8 @@ import {
 
 import type { JourneyConfig, JourneyProgress } from '../../common/types';
 import { LayoutRenderer } from '../components/layouts/layout_renderer';
+import { JourneyErrorBoundary } from '../components/error_boundary';
+import { useKibana } from '../hooks';
 
 // This will be replaced with proper data fetching later
 const SAMPLE_JOURNEYS: Record<string, JourneyConfig> = {
@@ -117,10 +119,15 @@ const SAMPLE_JOURNEYS: Record<string, JourneyConfig> = {
 export const JourneyRunnerPage: React.FC = () => {
   const { journeyId } = useParams<{ journeyId: string }>();
   const history = useHistory();
+  const { services } = useKibana();
   
   const [journey, setJourney] = useState<JourneyConfig | null>(null);
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
   const [loading, setLoading] = useState(true);
+  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+
+  // Safety check for services - make it non-blocking for now
+  const validationService = services?.validation;
 
   useEffect(() => {
     // Simulate loading the journey config
@@ -132,6 +139,20 @@ export const JourneyRunnerPage: React.FC = () => {
       
       const journeyConfig = SAMPLE_JOURNEYS[journeyId];
       if (journeyConfig) {
+        // Validate journey configuration if validation service is available
+        if (validationService) {
+          try {
+            const validationResult = await validationService.validateJourney(journeyConfig);
+            
+            if (!validationResult.valid) {
+              console.warn('Journey validation errors:', validationResult.errors);
+              setValidationErrors(validationResult.errors.map(e => e.message));
+            }
+          } catch (error) {
+            console.warn('Validation failed:', error);
+          }
+        }
+        
         setJourney(journeyConfig);
         setProgress({
           journeyId,
@@ -149,7 +170,7 @@ export const JourneyRunnerPage: React.FC = () => {
     if (journeyId) {
       loadJourney();
     }
-  }, [journeyId]);
+  }, [journeyId, validationService]);
 
   const handleNext = () => {
     if (!journey || !progress) return;
@@ -275,11 +296,27 @@ export const JourneyRunnerPage: React.FC = () => {
   );
 
   return (
-    <LayoutRenderer
-      layout={currentStep.layout}
-      components={currentStep.components}
-      variables={progress.variables}
-      navigationContent={navigationContent}
-    />
+    <JourneyErrorBoundary
+      journeyId={journey.metadata.id}
+      stepId={currentStep.id}
+      onError={(error, context) => {
+        console.error('Journey error:', error, context);
+      }}
+      onReset={() => {
+        // Reset journey to beginning
+        setProgress({
+          ...progress,
+          currentStepIndex: 0,
+          lastActiveAt: new Date().toISOString(),
+        });
+      }}
+    >
+      <LayoutRenderer
+        layout={currentStep.layout}
+        components={currentStep.components}
+        variables={progress.variables}
+        navigationContent={navigationContent}
+      />
+    </JourneyErrorBoundary>
   );
 };

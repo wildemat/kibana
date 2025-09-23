@@ -14,10 +14,12 @@ export interface LearningFlowPluginStartDependencies {
   share: SharePluginStart;
 }
 
+// Only expose what external consumers actually need
 export interface LearningFlowPluginSetup {}
 
 export interface LearningFlowPluginStart {}
 
+// Internal service context - validation is internal only
 export interface LearningFlowServicesContextDeps extends LearningFlowPluginStartDependencies {
   history: any;
 }

@@ -10,6 +10,7 @@ import type { LayoutTemplate, ComponentConfig } from '../../common/types';
 import { SingleColumnLayout } from './single_column_layout';
 import { TwoColumnLayout } from './two_column_layout';
 import { componentResolver } from '../component_registry';
+import { ComponentErrorBoundary } from '../error_boundary';
 
 export interface LayoutRendererProps {
   layout: LayoutTemplate;
@@ -27,8 +28,15 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
   const renderComponentsInSlot = (slotName: string) => {
     return components
       .filter(component => component.slot === slotName)
-      .map(component => componentResolver.resolve(component, variables))
-      .filter(Boolean);
+      .map(component => (
+        <ComponentErrorBoundary
+          key={component.id}
+          componentType={component.type}
+          componentId={component.id}
+        >
+          {componentResolver.resolve(component, variables)}
+        </ComponentErrorBoundary>
+      ));
   };
 
   const renderLayout = () => {

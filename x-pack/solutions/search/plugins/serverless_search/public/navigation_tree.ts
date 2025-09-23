@@ -170,7 +170,7 @@ export const navigationTree = ({ isAppRegistered }: ApplicationStart): Navigatio
               ...isAvailable('learningFlow', {
                 id: 'learningFlow',
                 title: i18n.translate('xpack.serverlessSearch.nav.build.learningFlow', {
-                  defaultMessage: 'Learning Flow',
+                  defaultMessage: 'Getting Started',
                 }),
                 link: 'learningFlow' as AppDeepLinkId,
                 breadcrumbStatus: 'hidden' as 'hidden',

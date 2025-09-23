@@ -88,7 +88,7 @@ export class JourneyErrorBoundary extends React.Component<
             })}
             color="danger"
             iconType="error"
-            size="l"
+            size="m"
           >
             <p>
               {i18n.translate('xpack.learningFlow.journeyError.description', {

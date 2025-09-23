@@ -19,6 +19,7 @@ import {
 } from '@elastic/eui';
 
 import type { JourneyConfig, JourneyProgress } from '../../common/types';
+import type { ValidationError } from '../services/validation_service';
 import { LayoutRenderer } from '../components/layouts/layout_renderer';
 import { JourneyErrorBoundary } from '../components/error_boundary';
 import { useKibana } from '../hooks';
@@ -125,7 +126,7 @@ export const JourneyRunnerPage = () => {
   const [journey, setJourney] = useState<JourneyConfig | null>(null);
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
   const [loading, setLoading] = useState(true);
-  const [validationErrors, setValidationErrors] = useState<string[]>([]);
+  const [_validationErrors, setValidationErrors] = useState<string[]>([]);
 
   // Safety check for services - make it non-blocking for now
   const validationService = services?.validation;
@@ -146,7 +147,7 @@ export const JourneyRunnerPage = () => {
             const validationResult = await validationService.validateJourney(journeyConfig);
 
             if (!validationResult.valid) {
-              setValidationErrors(validationResult.errors.map((e) => e.message));
+              setValidationErrors(validationResult.errors.map((e: ValidationError) => e.message));
             }
           } catch (error) {
             // Validation failed - continue without validation errors

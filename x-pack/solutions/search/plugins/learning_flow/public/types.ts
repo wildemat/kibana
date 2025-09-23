@@ -6,6 +6,7 @@
  */
 
 import type { SharePluginStart } from '@kbn/share-plugin/public';
+import type { ValidationServiceSetup } from './services/validation_service';
 
 export type LearningFlowPluginSetupDependencies = Record<string, never>;
 
@@ -14,11 +15,16 @@ export interface LearningFlowPluginStartDependencies {
 }
 
 // Only expose what external consumers actually need
-export type LearningFlowPluginSetup = Record<string, never>;
+export interface LearningFlowPluginSetup {
+  validation: ValidationServiceSetup;
+}
 
-export type LearningFlowPluginStart = Record<string, never>;
+export interface LearningFlowPluginStart {
+  validation: ValidationServiceSetup;
+}
 
 // Internal service context - validation is internal only
 export interface LearningFlowServicesContextDeps extends LearningFlowPluginStartDependencies {
   history: any;
+  validation: ValidationServiceSetup;
 }

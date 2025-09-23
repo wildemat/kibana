@@ -12,7 +12,7 @@ export interface TextComponentProps {
   id?: string;
   text: string;
   markdown?: boolean;
-  size?: 'xs' | 's' | 'm' | 'l' | 'xl';
+  size?: 'xs' | 's' | 'm' | 'relative';
   color?: 'default' | 'subdued' | 'success' | 'accent' | 'danger' | 'warning';
 }
 

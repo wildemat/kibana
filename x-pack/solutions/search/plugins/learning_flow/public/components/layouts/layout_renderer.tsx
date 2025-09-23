@@ -6,7 +6,7 @@
  */
 
 import React from 'react';
-import type { LayoutTemplate, ComponentConfig } from '../../common/types';
+import type { LayoutTemplate, ComponentConfig } from '../../../common/types';
 import { SingleColumnLayout } from './single_column_layout';
 import { TwoColumnLayout } from './two_column_layout';
 import { componentResolver } from '../component_registry';
@@ -19,16 +19,16 @@ export interface LayoutRendererProps {
   navigationContent?: React.ReactNode;
 }
 
-export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
+export const LayoutRenderer = ({
   layout,
   components,
   variables = {},
   navigationContent,
-}) => {
+}: LayoutRendererProps) => {
   const renderComponentsInSlot = (slotName: string) => {
     return components
-      .filter(component => component.slot === slotName)
-      .map(component => (
+      .filter((component) => component.slot === slotName)
+      .map((component) => (
         <ComponentErrorBoundary
           key={component.id}
           componentType={component.type}
@@ -81,7 +81,6 @@ export const LayoutRenderer: React.FC<LayoutRendererProps> = ({
         );
 
       default:
-        console.warn(`Unknown layout type: ${layout.type}`);
         return (
           <div style={{ padding: '20px', border: '1px dashed red' }}>
             <p>Unknown layout type: {layout.type}</p>

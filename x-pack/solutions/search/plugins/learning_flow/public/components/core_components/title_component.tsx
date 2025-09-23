@@ -15,14 +15,9 @@ export interface TitleComponentProps {
   color?: 'default' | 'subdued' | 'success' | 'accent' | 'danger' | 'warning';
 }
 
-export const TitleComponent: React.FC<TitleComponentProps> = ({ 
-  text, 
-  size = 'm',
-  color = 'default',
-  ...props 
-}) => {
+export const TitleComponent = ({ text, size = 'm', ...props }: TitleComponentProps) => {
   return (
-    <EuiTitle size={size} color={color} {...props}>
+    <EuiTitle size={size} {...props}>
       <h2>{text}</h2>
     </EuiTitle>
   );

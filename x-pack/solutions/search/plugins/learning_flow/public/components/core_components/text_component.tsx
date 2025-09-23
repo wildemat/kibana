@@ -16,13 +16,13 @@ export interface TextComponentProps {
   color?: 'default' | 'subdued' | 'success' | 'accent' | 'danger' | 'warning';
 }
 
-export const TextComponent: React.FC<TextComponentProps> = ({ 
-  text, 
+export const TextComponent = ({
+  text,
   markdown = false,
   size = 'm',
   color = 'default',
-  ...props 
-}) => {
+  ...props
+}: TextComponentProps) => {
   if (markdown) {
     return (
       <div {...props}>

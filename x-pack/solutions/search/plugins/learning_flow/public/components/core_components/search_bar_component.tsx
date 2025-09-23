@@ -16,13 +16,13 @@ export interface SearchBarComponentProps {
   fullWidth?: boolean;
 }
 
-export const SearchBarComponent: React.FC<SearchBarComponentProps> = ({ 
-  placeholder = "Enter your ES|QL query...",
-  query = "",
+export const SearchBarComponent = ({
+  placeholder = 'Enter your ES|QL query...',
+  query = '',
   onSearch,
   fullWidth = true,
-  ...props 
-}) => {
+  ...props
+}: SearchBarComponentProps) => {
   return (
     <EuiFormRow label="Search Query" {...props}>
       <EuiFieldSearch

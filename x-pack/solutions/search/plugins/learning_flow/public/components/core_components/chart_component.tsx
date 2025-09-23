@@ -15,18 +15,20 @@ export interface ChartComponentProps {
   title?: string;
 }
 
-export const ChartComponent: React.FC<ChartComponentProps> = ({ 
+export const ChartComponent = ({
   type = 'bar',
   data = [],
   title,
-  ...props 
-}) => {
+  ...props
+}: ChartComponentProps) => {
   // Placeholder implementation - will be fully implemented on Day 2
   return (
     <div {...props} style={{ border: '1px dashed #ccc', padding: '20px', textAlign: 'center' }}>
       <EuiText>
         <h4>{title || `${type.toUpperCase()} Chart`}</h4>
-        <p>Chart placeholder - will display {type} chart with {data.length} data points</p>
+        <p>
+          Chart placeholder - will display {type} chart with {data.length} data points
+        </p>
       </EuiText>
     </div>
   );

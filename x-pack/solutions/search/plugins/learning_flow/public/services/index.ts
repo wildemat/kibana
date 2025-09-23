@@ -6,9 +6,9 @@
  */
 
 export { ValidationService } from './validation_service';
-export type { 
+export type {
   ValidationServiceSetup,
   ValidationResult,
   ValidationError,
-  CustomValidator 
+  CustomValidator,
 } from './validation_service';

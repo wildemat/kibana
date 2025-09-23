@@ -29,7 +29,8 @@ const SAMPLE_JOURNEYS: Record<string, JourneyConfig> = {
     metadata: {
       id: 'intro-esql',
       title: 'Introduction to ES|QL',
-      description: 'Learn the basics of Elasticsearch Query Language (ES|QL) with hands-on examples.',
+      description:
+        'Learn the basics of Elasticsearch Query Language (ES|QL) with hands-on examples.',
       tags: ['elasticsearch', 'query', 'beginner'],
       estimatedTimeMinutes: 15,
       difficulty: 'beginner',
@@ -61,7 +62,7 @@ const SAMPLE_JOURNEYS: Record<string, JourneyConfig> = {
             type: 'text',
             slot: 'content',
             props: {
-              text: 'ES|QL is Elasticsearch\'s new query language that provides a powerful way to filter, transform, and analyze your data. In this journey, you\'ll learn the fundamentals and practice with real examples.',
+              text: "ES|QL is Elasticsearch's new query language that provides a powerful way to filter, transform, and analyze your data. In this journey, you'll learn the fundamentals and practice with real examples.",
               size: 'm',
             },
           },
@@ -81,7 +82,7 @@ const SAMPLE_JOURNEYS: Record<string, JourneyConfig> = {
             type: 'text',
             slot: 'sidebar',
             props: {
-              text: 'Step 2 of 3\n\nIn this step, you\'ll learn about:\n- Basic syntax\n- Field selection\n- Simple filtering',
+              text: "Step 2 of 3\n\nIn this step, you'll learn about:\n- Basic syntax\n- Field selection\n- Simple filtering",
               markdown: true,
             },
           },
@@ -116,11 +117,11 @@ const SAMPLE_JOURNEYS: Record<string, JourneyConfig> = {
   },
 };
 
-export const JourneyRunnerPage: React.FC = () => {
+export const JourneyRunnerPage = () => {
   const { journeyId } = useParams<{ journeyId: string }>();
   const history = useHistory();
   const { services } = useKibana();
-  
+
   const [journey, setJourney] = useState<JourneyConfig | null>(null);
   const [progress, setProgress] = useState<JourneyProgress | null>(null);
   const [loading, setLoading] = useState(true);
@@ -133,26 +134,25 @@ export const JourneyRunnerPage: React.FC = () => {
     // Simulate loading the journey config
     const loadJourney = async () => {
       setLoading(true);
-      
+
       // Simulate API delay
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
+      await new Promise((resolve) => setTimeout(resolve, 500));
+
       const journeyConfig = SAMPLE_JOURNEYS[journeyId];
       if (journeyConfig) {
         // Validate journey configuration if validation service is available
         if (validationService) {
           try {
             const validationResult = await validationService.validateJourney(journeyConfig);
-            
+
             if (!validationResult.valid) {
-              console.warn('Journey validation errors:', validationResult.errors);
-              setValidationErrors(validationResult.errors.map(e => e.message));
+              setValidationErrors(validationResult.errors.map((e) => e.message));
             }
           } catch (error) {
-            console.warn('Validation failed:', error);
+            // Validation failed - continue without validation errors
           }
         }
-        
+
         setJourney(journeyConfig);
         setProgress({
           journeyId,
@@ -163,7 +163,7 @@ export const JourneyRunnerPage: React.FC = () => {
           lastActiveAt: new Date().toISOString(),
         });
       }
-      
+
       setLoading(false);
     };
 
@@ -174,7 +174,7 @@ export const JourneyRunnerPage: React.FC = () => {
 
   const handleNext = () => {
     if (!journey || !progress) return;
-    
+
     const nextStepIndex = progress.currentStepIndex + 1;
     if (nextStepIndex < journey.steps.length) {
       setProgress({
@@ -191,7 +191,7 @@ export const JourneyRunnerPage: React.FC = () => {
 
   const handlePrevious = () => {
     if (!progress) return;
-    
+
     const prevStepIndex = Math.max(0, progress.currentStepIndex - 1);
     setProgress({
       ...progress,
@@ -225,9 +225,7 @@ export const JourneyRunnerPage: React.FC = () => {
       <div style={{ padding: '40px', textAlign: 'center' }}>
         <EuiText color="danger">Journey not found</EuiText>
         <EuiSpacer size="m" />
-        <EuiButton onClick={() => history.push('/')}>
-          Back to Journey Selection
-        </EuiButton>
+        <EuiButton onClick={() => history.push('/')}>Back to Journey Selection</EuiButton>
       </div>
     );
   }
@@ -243,47 +241,35 @@ export const JourneyRunnerPage: React.FC = () => {
             Step {progress.currentStepIndex + 1} of {journey.steps.length}
           </EuiText>
         </EuiFlexItem>
-        
+
         <EuiFlexItem>
-          <EuiProgress
-            value={progressPercentage}
-            max={100}
-            color="primary"
-            size="m"
-          />
+          <EuiProgress value={progressPercentage} max={100} color="primary" size="m" />
         </EuiFlexItem>
 
         <EuiFlexItem grow={false}>
           <EuiFlexGroup gutterSize="s">
             <EuiFlexItem grow={false}>
-              <EuiButtonEmpty 
-                size="s" 
-                onClick={handleCancel}
-                iconType="cross"
-              >
+              <EuiButtonEmpty size="s" onClick={handleCancel} iconType="cross">
                 Cancel
               </EuiButtonEmpty>
             </EuiFlexItem>
-            
+
             {progress.currentStepIndex > 0 && (
               <EuiFlexItem grow={false}>
-                <EuiButton
-                  size="s"
-                  onClick={handlePrevious}
-                  iconType="arrowLeft"
-                  iconSide="left"
-                >
+                <EuiButton size="s" onClick={handlePrevious} iconType="arrowLeft" iconSide="left">
                   Previous
                 </EuiButton>
               </EuiFlexItem>
             )}
-            
+
             <EuiFlexItem grow={false}>
               <EuiButton
                 size="s"
                 fill
                 onClick={handleNext}
-                iconType={progress.currentStepIndex === journey.steps.length - 1 ? 'check' : 'arrowRight'}
+                iconType={
+                  progress.currentStepIndex === journey.steps.length - 1 ? 'check' : 'arrowRight'
+                }
                 iconSide="right"
               >
                 {progress.currentStepIndex === journey.steps.length - 1 ? 'Finish' : 'Next'}
@@ -300,7 +286,7 @@ export const JourneyRunnerPage: React.FC = () => {
       journeyId={journey.metadata.id}
       stepId={currentStep.id}
       onError={(error, context) => {
-        console.error('Journey error:', error, context);
+        // Error handled by error boundary
       }}
       onReset={() => {
         // Reset journey to beginning

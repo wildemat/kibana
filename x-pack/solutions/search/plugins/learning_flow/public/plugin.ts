@@ -36,15 +36,15 @@ export class LearningFlowPlugin
     core.application.register({
       id: PLUGIN_ID,
       appRoute: '/app/elasticsearch/learning-flow',
-      title: i18n.translate('xpack.learningFlow.appTitle', { 
-        defaultMessage: 'Learning Flow Framework' 
+      title: i18n.translate('xpack.learningFlow.appTitle', {
+        defaultMessage: 'Learning Flow Framework',
       }),
       category: DEFAULT_APP_CATEGORIES.enterpriseSearch,
       euiIconType: 'training',
       async mount({ element, history }: AppMountParameters) {
         const { renderApp } = await import('./application');
         const [coreStart, depsStart] = await core.getStartServices();
-        
+
         const startDeps: LearningFlowServicesContextDeps = {
           ...depsStart,
           history,
@@ -64,7 +64,7 @@ export class LearningFlowPlugin
 
   public start(core: CoreStart): LearningFlowPluginStart {
     const validation = this.validationService.setup();
-    
+
     return {
       validation,
     };

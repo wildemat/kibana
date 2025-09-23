@@ -29,7 +29,8 @@ const SAMPLE_JOURNEYS: JourneyConfig[] = [
     metadata: {
       id: 'intro-esql',
       title: 'Introduction to ES|QL',
-      description: 'Learn the basics of Elasticsearch Query Language (ES|QL) with hands-on examples.',
+      description:
+        'Learn the basics of Elasticsearch Query Language (ES|QL) with hands-on examples.',
       tags: ['elasticsearch', 'query', 'beginner'],
       estimatedTimeMinutes: 15,
       difficulty: 'beginner',
@@ -61,7 +62,7 @@ const SAMPLE_JOURNEYS: JourneyConfig[] = [
             type: 'text',
             slot: 'content',
             props: {
-              text: 'ES|QL is Elasticsearch\'s new query language that provides a powerful way to filter, transform, and analyze your data.',
+              text: "ES|QL is Elasticsearch's new query language that provides a powerful way to filter, transform, and analyze your data.",
               size: 'm',
             },
           },
@@ -116,14 +117,18 @@ const SAMPLE_JOURNEYS: JourneyConfig[] = [
 
 const getDifficultyColor = (difficulty: string) => {
   switch (difficulty) {
-    case 'beginner': return 'success';
-    case 'intermediate': return 'warning';
-    case 'advanced': return 'danger';
-    default: return 'primary';
+    case 'beginner':
+      return 'success';
+    case 'intermediate':
+      return 'warning';
+    case 'advanced':
+      return 'danger';
+    default:
+      return 'primary';
   }
 };
 
-export const JourneySelectionPage: React.FC = () => {
+export const JourneySelectionPage = () => {
   const history = useHistory();
 
   const handleStartJourney = (journeyId: string) => {
@@ -142,16 +147,19 @@ export const JourneySelectionPage: React.FC = () => {
         <EuiPageSection>
           <EuiText>
             <p>
-              Welcome to the Learning Flow Framework! Choose a journey below to start your 
+              Welcome to the Learning Flow Framework! Choose a journey below to start your
               interactive learning experience with Elasticsearch and Kibana.
             </p>
           </EuiText>
-          
+
           <EuiSpacer size="l" />
 
           <EuiFlexGroup gutterSize="l" wrap>
             {SAMPLE_JOURNEYS.map((journey) => (
-              <EuiFlexItem key={journey.metadata.id} style={{ minWidth: '300px', maxWidth: '400px' }}>
+              <EuiFlexItem
+                key={journey.metadata.id}
+                style={{ minWidth: '300px', maxWidth: '400px' }}
+              >
                 <EuiCard
                   icon={<EuiIcon type="training" size="xxl" />}
                   title={journey.metadata.title}
@@ -160,10 +168,18 @@ export const JourneySelectionPage: React.FC = () => {
                     <EuiFlexGroup justifyContent="spaceBetween" alignItems="center">
                       <EuiFlexItem grow={false}>
                         <EuiText size="s" color="subdued">
-                          <span style={{ 
-                            color: `var(--eui-color${getDifficultyColor(journey.metadata.difficulty).charAt(0).toUpperCase() + getDifficultyColor(journey.metadata.difficulty).slice(1)})` 
-                          }}>
-                            {journey.metadata.difficulty.charAt(0).toUpperCase() + journey.metadata.difficulty.slice(1)}
+                          <span
+                            style={{
+                              color: `var(--eui-color${
+                                getDifficultyColor(journey.metadata.difficulty)
+                                  .charAt(0)
+                                  .toUpperCase() +
+                                getDifficultyColor(journey.metadata.difficulty).slice(1)
+                              })`,
+                            }}
+                          >
+                            {journey.metadata.difficulty.charAt(0).toUpperCase() +
+                              journey.metadata.difficulty.slice(1)}
                           </span>
                           {' • '}
                           {journey.metadata.estimatedTimeMinutes} min

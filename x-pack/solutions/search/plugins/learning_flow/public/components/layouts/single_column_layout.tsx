@@ -6,14 +6,14 @@
  */
 
 import React from 'react';
-import { 
+import {
   EuiPage,
   EuiPageBody,
   EuiPageHeader,
   EuiPageSection,
   EuiSpacer,
   EuiFlexGroup,
-  EuiFlexItem
+  EuiFlexItem,
 } from '@elastic/eui';
 
 export interface SingleColumnLayoutProps {
@@ -23,38 +23,32 @@ export interface SingleColumnLayoutProps {
   showProgress?: boolean;
 }
 
-export const SingleColumnLayout: React.FC<SingleColumnLayoutProps> = ({
+export const SingleColumnLayout = ({
   header,
   content,
   footer,
   showProgress = true,
-}) => {
+}: SingleColumnLayoutProps) => {
   return (
     <EuiPage paddingSize="l">
       <EuiPageBody>
         {header && (
           <>
-            <EuiPageHeader>
-              {header}
-            </EuiPageHeader>
+            <EuiPageHeader>{header}</EuiPageHeader>
             <EuiSpacer size="l" />
           </>
         )}
-        
+
         <EuiPageSection>
           <EuiFlexGroup direction="column">
-            <EuiFlexItem>
-              {content}
-            </EuiFlexItem>
+            <EuiFlexItem>{content}</EuiFlexItem>
           </EuiFlexGroup>
         </EuiPageSection>
 
         {footer && (
           <>
             <EuiSpacer size="l" />
-            <EuiPageSection>
-              {footer}
-            </EuiPageSection>
+            <EuiPageSection>{footer}</EuiPageSection>
           </>
         )}
       </EuiPageBody>

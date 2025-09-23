@@ -6,14 +6,14 @@
  */
 
 import React from 'react';
-import { 
+import {
   EuiPage,
   EuiPageBody,
   EuiPageHeader,
   EuiPageSection,
   EuiSpacer,
   EuiFlexGroup,
-  EuiFlexItem
+  EuiFlexItem,
 } from '@elastic/eui';
 
 export interface TwoColumnLayoutProps {
@@ -24,25 +24,23 @@ export interface TwoColumnLayoutProps {
   sidebarWidth?: number;
 }
 
-export const TwoColumnLayout: React.FC<TwoColumnLayoutProps> = ({
+export const TwoColumnLayout = ({
   header,
   sidebar,
   content,
   footer,
   sidebarWidth = 300,
-}) => {
+}: TwoColumnLayoutProps) => {
   return (
     <EuiPage paddingSize="l">
       <EuiPageBody>
         {header && (
           <>
-            <EuiPageHeader>
-              {header}
-            </EuiPageHeader>
+            <EuiPageHeader>{header}</EuiPageHeader>
             <EuiSpacer size="l" />
           </>
         )}
-        
+
         <EuiPageSection>
           <EuiFlexGroup gutterSize="l">
             {sidebar && (
@@ -50,19 +48,15 @@ export const TwoColumnLayout: React.FC<TwoColumnLayoutProps> = ({
                 {sidebar}
               </EuiFlexItem>
             )}
-            
-            <EuiFlexItem>
-              {content}
-            </EuiFlexItem>
+
+            <EuiFlexItem>{content}</EuiFlexItem>
           </EuiFlexGroup>
         </EuiPageSection>
 
         {footer && (
           <>
             <EuiSpacer size="l" />
-            <EuiPageSection>
-              {footer}
-            </EuiPageSection>
+            <EuiPageSection>{footer}</EuiPageSection>
           </>
         )}
       </EuiPageBody>

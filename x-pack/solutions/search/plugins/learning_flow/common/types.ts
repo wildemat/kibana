@@ -38,7 +38,7 @@ export interface JourneyStep {
   components: ComponentConfig[];
   variables?: Record<string, VariableSource>;
   onEnter?: string; // Event handler name
-  onExit?: string;  // Event handler name
+  onExit?: string; // Event handler name
 }
 
 export interface JourneyMetadata {

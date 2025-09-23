@@ -6,12 +6,12 @@
  */
 
 import { i18n } from '@kbn/i18n';
-import type { 
-  JourneyConfig, 
-  JourneyStep, 
-  ComponentConfig, 
+import type {
+  JourneyConfig,
+  JourneyStep,
+  ComponentConfig,
   LayoutTemplate,
-  VariableSource 
+  VariableSource,
 } from '../../common/types';
 
 export interface ValidationError {
@@ -86,9 +86,9 @@ export class ValidationService {
 
     // Validate journey metadata
     const metadataErrors = this.validateJourneyMetadata(journey);
-    errors.push(...metadataErrors.filter(e => e.severity === 'error'));
-    warnings.push(...metadataErrors.filter(e => e.severity === 'warning'));
-    suggestions.push(...metadataErrors.filter(e => e.severity === 'info'));
+    errors.push(...metadataErrors.filter((e) => e.severity === 'error'));
+    warnings.push(...metadataErrors.filter((e) => e.severity === 'warning'));
+    suggestions.push(...metadataErrors.filter((e) => e.severity === 'info'));
 
     // Validate global variables
     if (journey.variables) {
@@ -102,7 +102,7 @@ export class ValidationService {
     for (let i = 0; i < journey.steps.length; i++) {
       const step = journey.steps[i];
       const stepValidation = this.validateStep(step, journey);
-      
+
       // Add step index to error paths
       const prefixPath = (error: ValidationError) => ({
         ...error,
@@ -116,21 +116,23 @@ export class ValidationService {
 
     // Validate step dependencies and flow
     const flowErrors = this.validateJourneyFlow(journey);
-    errors.push(...flowErrors.filter(e => e.severity === 'error'));
-    warnings.push(...flowErrors.filter(e => e.severity === 'warning'));
+    errors.push(...flowErrors.filter((e) => e.severity === 'error'));
+    warnings.push(...flowErrors.filter((e) => e.severity === 'warning'));
 
     // Run custom journey validators
     const customValidators = this.customValidators.get('journey') || [];
     for (const validator of customValidators) {
       try {
         const customErrors = await validator(journey);
-        errors.push(...customErrors.filter(e => e.severity === 'error'));
-        warnings.push(...customErrors.filter(e => e.severity === 'warning'));
-        suggestions.push(...customErrors.filter(e => e.severity === 'info'));
+        errors.push(...customErrors.filter((e) => e.severity === 'error'));
+        warnings.push(...customErrors.filter((e) => e.severity === 'warning'));
+        suggestions.push(...customErrors.filter((e) => e.severity === 'info'));
       } catch (error) {
         errors.push({
           code: 'CUSTOM_VALIDATOR_ERROR',
-          message: `Custom validator failed: ${error instanceof Error ? error.message : String(error)}`,
+          message: `Custom validator failed: ${
+            error instanceof Error ? error.message : String(error)
+          }`,
           path: 'journey',
           severity: 'error',
         });
@@ -145,7 +147,10 @@ export class ValidationService {
     };
   }
 
-  public validateStep(step: JourneyStep, journeyContext?: Partial<JourneyConfig>): ValidationResult {
+  public validateStep(
+    step: JourneyStep,
+    journeyContext?: Partial<JourneyConfig>
+  ): ValidationResult {
     const errors: ValidationError[] = [];
     const warnings: ValidationError[] = [];
     const suggestions: ValidationError[] = [];
@@ -187,7 +192,7 @@ export class ValidationService {
     for (let i = 0; i < step.components.length; i++) {
       const component = step.components[i];
       const componentValidation = this.validateComponent(component);
-      
+
       const prefixComponentPath = (error: ValidationError) => ({
         ...error,
         path: `components[${i}].${error.path}`,
@@ -252,15 +257,15 @@ export class ValidationService {
 
     // Validate props based on component type
     const propsValidation = this.validateComponentProps(component.type, component.props);
-    errors.push(...propsValidation.filter(e => e.severity === 'error'));
-    warnings.push(...propsValidation.filter(e => e.severity === 'warning'));
-    suggestions.push(...propsValidation.filter(e => e.severity === 'info'));
+    errors.push(...propsValidation.filter((e) => e.severity === 'error'));
+    warnings.push(...propsValidation.filter((e) => e.severity === 'warning'));
+    suggestions.push(...propsValidation.filter((e) => e.severity === 'info'));
 
     // Validate conditions if present
     if (component.conditions) {
       const conditionErrors = this.validateConditions(component.conditions);
-      errors.push(...conditionErrors.filter(e => e.severity === 'error'));
-      warnings.push(...conditionErrors.filter(e => e.severity === 'warning'));
+      errors.push(...conditionErrors.filter((e) => e.severity === 'error'));
+      warnings.push(...conditionErrors.filter((e) => e.severity === 'warning'));
     }
 
     return {
@@ -293,9 +298,9 @@ export class ValidationService {
           code: 'INVALID_LAYOUT_TYPE',
           message: i18n.translate('xpack.learningFlow.validation.layout.invalidType', {
             defaultMessage: 'Invalid layout type: {type}. Valid types are: {validTypes}',
-            values: { 
-              type: layout.type, 
-              validTypes: validTypes.join(', ') 
+            values: {
+              type: layout.type,
+              validTypes: validTypes.join(', '),
             },
           }),
           path: 'type',
@@ -472,7 +477,7 @@ export class ValidationService {
     }
 
     // Check for duplicate step IDs
-    const stepIds = journey.steps.map(step => step.id);
+    const stepIds = journey.steps.map((step) => step.id);
     const duplicateIds = stepIds.filter((id, index) => stepIds.indexOf(id) !== index);
     for (const duplicateId of [...new Set(duplicateIds)]) {
       errors.push({
@@ -489,19 +494,22 @@ export class ValidationService {
     return errors;
   }
 
-  private validateComponentSlots(components: ComponentConfig[], layout: LayoutTemplate): ValidationError[] {
+  private validateComponentSlots(
+    components: ComponentConfig[],
+    layout: LayoutTemplate
+  ): ValidationError[] {
     const errors: ValidationError[] = [];
     const layoutSlots = layout.slots || [];
-    
+
     for (const component of components) {
       if (component.slot && !layoutSlots.includes(component.slot)) {
         errors.push({
           code: 'INVALID_COMPONENT_SLOT',
           message: i18n.translate('xpack.learningFlow.validation.component.invalidSlot', {
             defaultMessage: 'Component {componentId} references unknown slot: {slot}',
-            values: { 
-              componentId: component.id, 
-              slot: component.slot 
+            values: {
+              componentId: component.id,
+              slot: component.slot,
             },
           }),
           path: `components.${component.id}.slot`,
@@ -517,7 +525,10 @@ export class ValidationService {
     return errors;
   }
 
-  private validateComponentProps(componentType: string, props: Record<string, any>): ValidationError[] {
+  private validateComponentProps(
+    componentType: string,
+    props: Record<string, any>
+  ): ValidationError[] {
     const errors: ValidationError[] = [];
 
     // Component-specific prop validation
@@ -552,9 +563,12 @@ export class ValidationService {
         if (props.placeholder && typeof props.placeholder !== 'string') {
           errors.push({
             code: 'INVALID_SEARCH_PLACEHOLDER',
-            message: i18n.translate('xpack.learningFlow.validation.component.search.invalidPlaceholder', {
-              defaultMessage: 'Search bar placeholder must be a string',
-            }),
+            message: i18n.translate(
+              'xpack.learningFlow.validation.component.search.invalidPlaceholder',
+              {
+                defaultMessage: 'Search bar placeholder must be a string',
+              }
+            ),
             path: 'props.placeholder',
             severity: 'error',
           });
@@ -565,9 +579,12 @@ export class ValidationService {
         if (props.columns && !Array.isArray(props.columns)) {
           errors.push({
             code: 'INVALID_TABLE_COLUMNS',
-            message: i18n.translate('xpack.learningFlow.validation.component.table.invalidColumns', {
-              defaultMessage: 'Data table columns must be an array',
-            }),
+            message: i18n.translate(
+              'xpack.learningFlow.validation.component.table.invalidColumns',
+              {
+                defaultMessage: 'Data table columns must be an array',
+              }
+            ),
             path: 'props.columns',
             severity: 'error',
           });
@@ -604,16 +621,18 @@ export class ValidationService {
     return errors;
   }
 
-  private validateConditions(conditions: Array<{
-    field: string;
-    operator: 'equals' | 'not_equals' | 'contains' | 'exists';
-    value: any;
-  }>): ValidationError[] {
+  private validateConditions(
+    conditions: Array<{
+      field: string;
+      operator: 'equals' | 'not_equals' | 'contains' | 'exists';
+      value: any;
+    }>
+  ): ValidationError[] {
     const errors: ValidationError[] = [];
 
     for (let i = 0; i < conditions.length; i++) {
       const condition = conditions[i];
-      
+
       if (!condition.field) {
         errors.push({
           code: 'MISSING_CONDITION_FIELD',

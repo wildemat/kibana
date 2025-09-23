@@ -16,13 +16,13 @@ export interface CodeComponentProps {
   transparentBackground?: boolean;
 }
 
-export const CodeComponent: React.FC<CodeComponentProps> = ({ 
+export const CodeComponent = ({
   code,
   language = 'sql',
   copyable = true,
   transparentBackground = false,
-  ...props 
-}) => {
+  ...props
+}: CodeComponentProps) => {
   return (
     <EuiCodeBlock
       language={language}

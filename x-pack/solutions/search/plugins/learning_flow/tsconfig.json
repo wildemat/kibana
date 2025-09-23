@@ -1,17 +1,19 @@
 {
-  "extends": "../../../../tsconfig.base.json",
+  "extends": "../../../../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "target/types"
+    "outDir": "target/types",
   },
   "include": [
     "common/**/*",
     "public/**/*",
     "server/**/*"
   ],
-  "references": [
-    { "path": "../../../../src/core/tsconfig.json" },
-    { "path": "../../../../src/plugins/share/tsconfig.json" },
-    { "path": "../../../../x-pack/plugins/kibana_react/tsconfig.json" }
+  "kbn_references": [
+    "@kbn/core",
+    "@kbn/kibana-react-plugin",
+    "@kbn/i18n",
+    "@kbn/i18n-react",
+    "@kbn/share-plugin"
   ],
   "exclude": [
     "target/**/*"

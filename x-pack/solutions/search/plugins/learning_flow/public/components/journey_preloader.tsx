@@ -5,7 +5,7 @@
  * 2.0.
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { EuiCallOut, EuiSpacer } from '@elastic/eui';
 import { i18n } from '@kbn/i18n';
 import { componentResolver } from './component_registry';
@@ -21,13 +21,13 @@ interface JourneyPreloaderProps {
  * Component that preloads all components used in a journey
  * Demonstrates the enhanced component registry features
  */
-export const JourneyPreloader: React.FC<JourneyPreloaderProps> = ({
+export const JourneyPreloader = ({
   journey,
   onPreloadComplete,
   onPreloadError,
-}) => {
-  const [isPreloading, setIsPreloading] = React.useState(false);
-  const [preloadErrors, setPreloadErrors] = React.useState<string[]>([]);
+}: JourneyPreloaderProps) => {
+  const [isPreloading, setIsPreloading] = useState(false);
+  const [preloadErrors, setPreloadErrors] = useState<string[]>([]);
 
   useEffect(() => {
     const preloadComponents = async () => {
@@ -36,8 +36,8 @@ export const JourneyPreloader: React.FC<JourneyPreloaderProps> = ({
 
       // Extract all unique component types from journey steps
       const componentTypes = new Set<string>();
-      journey.steps.forEach(step => {
-        step.components.forEach(component => {
+      journey.steps.forEach((step) => {
+        step.components.forEach((component) => {
           componentTypes.add(component.type);
         });
       });
@@ -45,28 +45,28 @@ export const JourneyPreloader: React.FC<JourneyPreloaderProps> = ({
       try {
         // Preload all components
         await componentResolver.preloadComponents(Array.from(componentTypes));
-        
+
         // Validate that all components loaded successfully
         const validation = await componentResolver.validateComponents(
-          journey.steps.flatMap(step => step.components)
+          journey.steps.flatMap((step) => step.components)
         );
 
         if (!validation.valid) {
           const errorMessages = [
-            ...validation.missing.map(type => 
+            ...validation.missing.map((type) =>
               i18n.translate('xpack.learningFlow.preloader.missingComponent', {
                 defaultMessage: 'Missing component: {type}',
-                values: { type }
+                values: { type },
               })
             ),
-            ...validation.errors.map(error => 
+            ...validation.errors.map((error) =>
               i18n.translate('xpack.learningFlow.preloader.componentError', {
                 defaultMessage: 'Error with {type}: {error}',
-                values: { type: error.type, error: error.error }
+                values: { type: error.type, error: error.error },
               })
-            )
+            ),
           ];
-          
+
           setPreloadErrors(errorMessages);
           onPreloadError?.(errorMessages);
         } else {
@@ -75,7 +75,7 @@ export const JourneyPreloader: React.FC<JourneyPreloaderProps> = ({
       } catch (error) {
         const errorMessage = i18n.translate('xpack.learningFlow.preloader.generalError', {
           defaultMessage: 'Failed to preload components: {error}',
-          values: { error: error instanceof Error ? error.message : String(error) }
+          values: { error: error instanceof Error ? error.message : String(error) },
         });
         setPreloadErrors([errorMessage]);
         onPreloadError?.([errorMessage]);
@@ -92,7 +92,7 @@ export const JourneyPreloader: React.FC<JourneyPreloaderProps> = ({
       <>
         <EuiCallOut
           title={i18n.translate('xpack.learningFlow.preloader.errorTitle', {
-            defaultMessage: 'Component Loading Errors'
+            defaultMessage: 'Component Loading Errors',
           })}
           color="warning"
           iconType="warning"
@@ -113,13 +113,13 @@ export const JourneyPreloader: React.FC<JourneyPreloaderProps> = ({
       <>
         <EuiCallOut
           title={i18n.translate('xpack.learningFlow.preloader.loadingTitle', {
-            defaultMessage: 'Loading Journey Components...'
+            defaultMessage: 'Loading Journey Components...',
           })}
           color="primary"
           iconType="loading"
         >
           {i18n.translate('xpack.learningFlow.preloader.loadingDescription', {
-            defaultMessage: 'Preparing components for optimal performance.'
+            defaultMessage: 'Preparing components for optimal performance.',
           })}
         </EuiCallOut>
         <EuiSpacer size="m" />
@@ -133,15 +133,15 @@ export const JourneyPreloader: React.FC<JourneyPreloaderProps> = ({
 
 // Usage example hook for journey pages
 export const useComponentPreloading = (journey: JourneyConfig | null) => {
-  const [isReady, setIsReady] = React.useState(false);
-  const [errors, setErrors] = React.useState<string[]>([]);
+  const [isReady, setIsReady] = useState(false);
+  const [errors, setErrors] = useState<string[]>([]);
 
-  const handlePreloadComplete = React.useCallback(() => {
+  const handlePreloadComplete = useCallback(() => {
     setIsReady(true);
     setErrors([]);
   }, []);
 
-  const handlePreloadError = React.useCallback((preloadErrors: string[]) => {
+  const handlePreloadError = useCallback((preloadErrors: string[]) => {
     setErrors(preloadErrors);
     setIsReady(false);
   }, []);

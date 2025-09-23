@@ -11,7 +11,7 @@ import { Routes, Route } from '@kbn/shared-ux-router';
 import { JourneySelectionPage } from './pages/journey_selection_page';
 import { JourneyRunnerPage } from './pages/journey_runner_page';
 
-export const LearningFlowRouter: React.FC = () => {
+export const LearningFlowRouter = () => {
   return (
     <Routes>
       <Route exact path="/" component={JourneySelectionPage} />

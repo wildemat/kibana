@@ -15,12 +15,12 @@ export interface DataTableComponentProps {
   loading?: boolean;
 }
 
-export const DataTableComponent: React.FC<DataTableComponentProps> = ({ 
+export const DataTableComponent = ({
   data = [],
   columns = [],
   loading = false,
-  ...props 
-}) => {
+  ...props
+}: DataTableComponentProps) => {
   // Placeholder implementation - will be fully implemented on Day 2
   if (data.length === 0) {
     return (
@@ -32,12 +32,5 @@ export const DataTableComponent: React.FC<DataTableComponentProps> = ({
     );
   }
 
-  return (
-    <EuiBasicTable
-      items={data}
-      columns={columns}
-      loading={loading}
-      {...props}
-    />
-  );
+  return <EuiBasicTable items={data} columns={columns} loading={loading} {...props} />;
 };

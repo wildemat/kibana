@@ -5,9 +5,7 @@
  * 2.0.
  */
 
-import type { CoreSetup, CoreStart, Plugin } from '@kbn/core/server';
-
-export interface LearningFlowPluginSetup {}
-export interface LearningFlowPluginStart {}
-export interface LearningFlowPluginSetupDependencies {}
-export interface LearningFlowPluginStartDependencies {}
+export type LearningFlowPluginSetup = Record<string, never>;
+export type LearningFlowPluginStart = Record<string, never>;
+export type LearningFlowPluginSetupDependencies = Record<string, never>;
+export type LearningFlowPluginStartDependencies = Record<string, never>;

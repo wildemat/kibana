@@ -84,6 +84,7 @@ const ComponentErrorFallback = ({
   componentType: string;
   error?: string;
 }) => (
+  // TODO: Use EuiCallOut instead of custom styling.
   <div
     style={{
       padding: '16px',

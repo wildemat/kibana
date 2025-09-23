@@ -15,7 +15,7 @@ export interface VariableSource {
 export interface ComponentConfig {
   id: string;
   type: string;
-  slot?: string;
+  slot?: LayoutSlot;
   props: Record<string, any>;
   conditions?: Array<{
     field: string;
@@ -24,11 +24,42 @@ export interface ComponentConfig {
   }>;
 }
 
-export interface LayoutTemplate {
-  type: 'single-column' | 'two-column' | 'hero' | 'side-by-side';
-  slots: string[];
+// Slot definitions for each layout type
+export type SingleColumnSlot = 'header' | 'content' | 'footer';
+export type TwoColumnSlot = 'header' | 'sidebar' | 'content' | 'footer';
+export type HeroSlot = 'hero' | 'content' | 'footer';
+export type SideBySideSlot = 'left' | 'right' | 'header' | 'footer';
+
+// Union type for all possible slots
+export type LayoutSlot = SingleColumnSlot | TwoColumnSlot | HeroSlot | SideBySideSlot;
+
+// Layout-specific interfaces
+export interface SingleColumnLayout {
+  type: 'single-column';
+  slots: SingleColumnSlot[];
   config?: Record<string, any>;
 }
+
+export interface TwoColumnLayout {
+  type: 'two-column';
+  slots: TwoColumnSlot[];
+  config?: Record<string, any>;
+}
+
+export interface HeroLayout {
+  type: 'hero';
+  slots: HeroSlot[];
+  config?: Record<string, any>;
+}
+
+export interface SideBySideLayout {
+  type: 'side-by-side';
+  slots: SideBySideSlot[];
+  config?: Record<string, any>;
+}
+
+// Union type for all layout templates
+export type LayoutTemplate = SingleColumnLayout | TwoColumnLayout | HeroLayout | SideBySideLayout;
 
 export interface JourneyStep {
   id: string;

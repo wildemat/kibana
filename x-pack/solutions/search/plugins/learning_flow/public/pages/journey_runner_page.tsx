@@ -23,100 +23,7 @@ import type { ValidationError } from '../services/validation_service';
 import { LayoutRenderer } from '../components/layouts/layout_renderer';
 import { JourneyErrorBoundary } from '../components/error_boundary';
 import { useKibana } from '../hooks';
-
-// This will be replaced with proper data fetching later
-const SAMPLE_JOURNEYS: Record<string, JourneyConfig> = {
-  'intro-esql': {
-    metadata: {
-      id: 'intro-esql',
-      title: 'Introduction to ES|QL',
-      description:
-        'Learn the basics of Elasticsearch Query Language (ES|QL) with hands-on examples.',
-      tags: ['elasticsearch', 'query', 'beginner'],
-      estimatedTimeMinutes: 15,
-      difficulty: 'beginner',
-      createdAt: '2024-01-15T00:00:00Z',
-      updatedAt: '2024-01-15T00:00:00Z',
-      author: 'Elastic Team',
-    },
-    steps: [
-      {
-        id: 'step-1',
-        title: 'Welcome to ES|QL',
-        description: 'Introduction to Elasticsearch Query Language',
-        layout: {
-          type: 'single-column',
-          slots: ['header', 'content', 'footer'],
-        },
-        components: [
-          {
-            id: 'welcome-title',
-            type: 'title',
-            slot: 'header',
-            props: {
-              text: 'Welcome to ES|QL Learning Journey',
-              size: 'l',
-            },
-          },
-          {
-            id: 'intro-text',
-            type: 'text',
-            slot: 'content',
-            props: {
-              text: "ES|QL is Elasticsearch's new query language that provides a powerful way to filter, transform, and analyze your data. In this journey, you'll learn the fundamentals and practice with real examples.",
-              size: 'm',
-            },
-          },
-        ],
-      },
-      {
-        id: 'step-2',
-        title: 'Basic Query Structure',
-        description: 'Learn the basic structure of ES|QL queries',
-        layout: {
-          type: 'two-column',
-          slots: ['sidebar', 'content', 'footer'],
-        },
-        components: [
-          {
-            id: 'progress-info',
-            type: 'text',
-            slot: 'sidebar',
-            props: {
-              text: "Step 2 of 3\n\nIn this step, you'll learn about:\n- Basic syntax\n- Field selection\n- Simple filtering",
-              markdown: true,
-            },
-          },
-          {
-            id: 'query-example',
-            type: 'code',
-            slot: 'content',
-            props: {
-              code: 'FROM logs-*\n| WHERE @timestamp > NOW() - 1h\n| STATS count() BY host.name',
-              language: 'sql',
-            },
-          },
-          {
-            id: 'query-explanation',
-            type: 'text',
-            slot: 'content',
-            props: {
-              text: 'This query demonstrates the basic ES|QL structure: FROM (data source), WHERE (filtering), and STATS (aggregation).',
-              size: 'm',
-            },
-          },
-        ],
-      },
-    ],
-    onFinish: {
-      type: 'modal',
-      config: {
-        title: 'Journey Complete!',
-        message: 'Congratulations on completing the ES|QL introduction.',
-      },
-    },
-  },
-};
+import { SAMPLE_JOURNEYS_BY_ID } from '../data/journey_configs';
 
 export const JourneyRunnerPage = () => {
   const { journeyId } = useParams<{ journeyId: string }>();
@@ -139,7 +46,7 @@ export const JourneyRunnerPage = () => {
       // Simulate API delay
       await new Promise((resolve) => setTimeout(resolve, 500));
 
-      const journeyConfig = SAMPLE_JOURNEYS[journeyId];
+      const journeyConfig = SAMPLE_JOURNEYS_BY_ID[journeyId];
       if (journeyConfig) {
         // Validate journey configuration if validation service is available
         if (validationService) {

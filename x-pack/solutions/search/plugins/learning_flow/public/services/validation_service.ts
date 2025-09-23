@@ -502,7 +502,7 @@ export class ValidationService {
     const layoutSlots = layout.slots || [];
 
     for (const component of components) {
-      if (component.slot && !layoutSlots.includes(component.slot)) {
+      if (component.slot && !(layoutSlots as string[]).includes(component.slot)) {
         errors.push({
           code: 'INVALID_COMPONENT_SLOT',
           message: i18n.translate('xpack.learningFlow.validation.component.invalidSlot', {

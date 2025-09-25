@@ -19,6 +19,7 @@ import {
   EuiFlexItem,
   EuiIcon,
   EuiButton,
+  EuiBadge,
 } from '@elastic/eui';
 import { useHistory } from 'react-router-dom';
 import { SAMPLE_JOURNEYS, getDifficultyColor } from '../data/journey_configs';
@@ -27,7 +28,7 @@ export const JourneySelectionPage = () => {
   const history = useHistory();
 
   const handleStartJourney = (journeyId: string) => {
-    history.push(`/journey/${journeyId}`);
+    history.push(`/journey/${journeyId}/start`);
   };
 
   return (
@@ -51,10 +52,7 @@ export const JourneySelectionPage = () => {
 
           <EuiFlexGroup gutterSize="l" wrap>
             {SAMPLE_JOURNEYS.map((journey) => (
-              <EuiFlexItem
-                key={journey.metadata.id}
-                style={{ minWidth: '300px', maxWidth: '400px' }}
-              >
+              <EuiFlexItem key={journey.metadata.id} grow={false}>
                 <EuiCard
                   icon={<EuiIcon type="training" size="xxl" />}
                   title={journey.metadata.title}
@@ -62,23 +60,19 @@ export const JourneySelectionPage = () => {
                   footer={
                     <EuiFlexGroup justifyContent="spaceBetween" alignItems="center">
                       <EuiFlexItem grow={false}>
-                        <EuiText size="s" color="subdued">
-                          <span
-                            style={{
-                              color: `var(--eui-color${
-                                getDifficultyColor(journey.metadata.difficulty)
-                                  .charAt(0)
-                                  .toUpperCase() +
-                                getDifficultyColor(journey.metadata.difficulty).slice(1)
-                              })`,
-                            }}
-                          >
-                            {journey.metadata.difficulty.charAt(0).toUpperCase() +
-                              journey.metadata.difficulty.slice(1)}
-                          </span>
-                          {' • '}
-                          {journey.metadata.estimatedTimeMinutes} min
-                        </EuiText>
+                        <EuiFlexGroup gutterSize="s" alignItems="center">
+                          <EuiFlexItem grow={false}>
+                            <EuiBadge color={getDifficultyColor(journey.metadata.difficulty)}>
+                              {journey.metadata.difficulty.charAt(0).toUpperCase() +
+                                journey.metadata.difficulty.slice(1)}
+                            </EuiBadge>
+                          </EuiFlexItem>
+                          <EuiFlexItem grow={false}>
+                            <EuiText size="s" color="subdued">
+                              {journey.metadata.estimatedTimeMinutes} min
+                            </EuiText>
+                          </EuiFlexItem>
+                        </EuiFlexGroup>
                       </EuiFlexItem>
                       <EuiFlexItem grow={false}>
                         <EuiButton

@@ -6,7 +6,7 @@
  */
 
 import React, { Suspense, useEffect, useState, createElement } from 'react';
-import { EuiLoadingSpinner, EuiText } from '@elastic/eui';
+import { EuiLoadingSpinner, EuiText, EuiCallOut, EuiFlexGroup, EuiFlexItem } from '@elastic/eui';
 import { i18n } from '@kbn/i18n';
 import type { ComponentConfig } from '../../common/types';
 
@@ -57,23 +57,24 @@ const componentFactories: { [key: string]: ComponentFactory } = {
 
 // Loading fallback component
 const ComponentLoadingFallback = ({ componentType }: { componentType: string }) => (
-  <div
-    style={{
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      padding: '16px',
-      minHeight: '60px',
-    }}
+  <EuiFlexGroup
+    alignItems="center"
+    justifyContent="center"
+    gutterSize="s"
+    style={{ padding: '16px', minHeight: '60px' }}
   >
-    <EuiLoadingSpinner size="m" />
-    <EuiText size="s" style={{ marginLeft: '8px' }}>
-      {i18n.translate('xpack.learningFlow.componentRegistry.loading', {
-        defaultMessage: 'Loading {componentType} component...',
-        values: { componentType },
-      })}
-    </EuiText>
-  </div>
+    <EuiFlexItem grow={false}>
+      <EuiLoadingSpinner size="m" />
+    </EuiFlexItem>
+    <EuiFlexItem grow={false}>
+      <EuiText size="s">
+        {i18n.translate('xpack.learningFlow.componentRegistry.loading', {
+          defaultMessage: 'Loading {componentType} component...',
+          values: { componentType },
+        })}
+      </EuiText>
+    </EuiFlexItem>
+  </EuiFlexGroup>
 );
 
 // Error fallback component
@@ -84,26 +85,17 @@ const ComponentErrorFallback = ({
   componentType: string;
   error?: string;
 }) => (
-  // TODO: Use EuiCallOut instead of custom styling.
-  <div
-    style={{
-      padding: '16px',
-      border: '1px dashed #d93026',
-      background: '#fef5f5',
-      borderRadius: '4px',
-      color: '#d93026',
-    }}
+  <EuiCallOut
+    title={i18n.translate('xpack.learningFlow.componentRegistry.error', {
+      defaultMessage: 'Error loading component: {componentType}',
+      values: { componentType },
+    })}
+    color="danger"
+    iconType="warning"
+    size="s"
   >
-    <EuiText size="s">
-      <strong>
-        {i18n.translate('xpack.learningFlow.componentRegistry.error', {
-          defaultMessage: 'Error loading component: {componentType}',
-          values: { componentType },
-        })}
-      </strong>
-      {error && <div>{error}</div>}
-    </EuiText>
-  </div>
+    {error && <EuiText size="s">{error}</EuiText>}
+  </EuiCallOut>
 );
 
 export class ComponentResolver {

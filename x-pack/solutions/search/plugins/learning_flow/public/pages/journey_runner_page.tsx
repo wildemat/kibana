@@ -16,6 +16,7 @@ import {
   EuiSpacer,
   EuiText,
   EuiPanel,
+  EuiEmptyPrompt,
 } from '@elastic/eui';
 
 import type { JourneyConfig, JourneyProgress } from '../../common/types';
@@ -109,9 +110,8 @@ export const JourneyRunnerPage = () => {
   };
 
   const handleFinish = () => {
-    // Handle journey completion based on onFinish config
-    alert('Journey completed! This would show the completion modal or redirect.');
-    history.push('/');
+    // Navigate to completion page instead of showing alert
+    history.push(`/journey/${journeyId}/complete`);
   };
 
   const handleCancel = () => {
@@ -120,21 +120,25 @@ export const JourneyRunnerPage = () => {
 
   if (loading) {
     return (
-      <div style={{ padding: '40px', textAlign: 'center' }}>
-        <EuiProgress size="m" color="primary" />
-        <EuiSpacer size="m" />
-        <EuiText>Loading journey...</EuiText>
-      </div>
+      <EuiEmptyPrompt
+        icon={<EuiProgress size="m" color="primary" />}
+        title={<h3>Loading journey...</h3>}
+        titleSize="s"
+      />
     );
   }
 
   if (!journey || !progress) {
     return (
-      <div style={{ padding: '40px', textAlign: 'center' }}>
-        <EuiText color="danger">Journey not found</EuiText>
-        <EuiSpacer size="m" />
-        <EuiButton onClick={() => history.push('/')}>Back to Journey Selection</EuiButton>
-      </div>
+      <EuiEmptyPrompt
+        iconType="warning"
+        color="danger"
+        title={<h3>Journey not found</h3>}
+        titleSize="s"
+        actions={
+          <EuiButton onClick={() => history.push('/')}>Back to Journey Selection</EuiButton>
+        }
+      />
     );
   }
 

@@ -33,7 +33,7 @@ jobs:
       - name: Sync main branch
         run: |
           git checkout main
-          git merge upstream/main --ff-only || {
+          git pull upstream main --rebase -Xtheirs || {
             echo "Fast-forward merge failed. Your fork may have diverged from upstream."
             echo "Please resolve conflicts manually."
             exit 1

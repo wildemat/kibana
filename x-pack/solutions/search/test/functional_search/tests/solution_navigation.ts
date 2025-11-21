@@ -50,8 +50,9 @@ export default function searchSolutionNavigation({
       const expectNoPageReload = await solutionNavigation.createNoPageReloadCheck();
 
       // check side nav links
+      // First visit redirects to getting started page
       await solutionNavigation.sidenav.expectLinkActive({
-        deepLinkId: 'searchHomepage',
+        deepLinkId: 'searchGettingStarted',
       });
 
       const sideNavTestCases: Array<{
@@ -84,6 +85,11 @@ export default function searchSolutionNavigation({
           breadcrumbs: ['Developer Tools'],
           pageTestSubject: 'console',
         },
+        {
+          link: { deepLinkId: 'searchGettingStarted' },
+          breadcrumbs: ['Getting started'],
+          pageTestSubject: 'gettingStartedHeader',
+        },
       ];
 
       for (const testCase of sideNavTestCases) {
@@ -109,6 +115,7 @@ export default function searchSolutionNavigation({
           'dashboards',
           'searchPlayground',
           'machine_learning',
+          'search_getting_started',
           'dev_tools',
           'data_management',
           'stack_management',

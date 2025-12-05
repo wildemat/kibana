@@ -36,10 +36,10 @@ export default function searchClassicNavigationTests({
       await cleanUp();
     });
 
-    // TODO: see https://github.com/elastic/kibana/pull/243499
-    it.skip('renders expected navigation items', async () => {
+    it('renders expected navigation items', async () => {
       await searchClassicNavigation.expectAllNavItems([
         { id: 'Home', label: 'Home' },
+        { id: 'GettingStarted', label: 'Getting started' },
         { id: 'Build', label: 'Build' },
         { id: 'Indices', label: 'Index Management' },
         { id: 'Playground', label: 'Playground' },
@@ -60,6 +60,11 @@ export default function searchClassicNavigationTests({
         breadcrumbs: string[];
         pageTestSubject: string;
       }> = [
+        {
+          navItem: 'GettingStarted',
+          breadcrumbs: ['Getting started'],
+          pageTestSubject: 'gettingStartedHeader',
+        },
         {
           navItem: 'Indices',
           breadcrumbs: ['Build', 'Index Management'],

@@ -15,4 +15,4 @@ export const GETTING_STARTED_SIDENAV_TOUR_KEY = 'search.gettingStarted.sidenavTo
  * This matches the data-test-subj attribute on the sidenav item.
  */
 export const GETTING_STARTED_SIDENAV_TOUR_TARGET =
-  '[data-test-subj~="projectSideNav"] [data-test-subj*="nav-item-id-search_getting_started"]';
+  '[data-test-subj*="nav-item-id-search_getting_started"]';

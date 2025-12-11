@@ -9,10 +9,12 @@ import { BehaviorSubject, type Subscription } from 'rxjs';
 
 import type { AppMountParameters, CoreSetup, CoreStart, Plugin } from '@kbn/core/public';
 import { AppStatus, DEFAULT_APP_CATEGORIES, type AppUpdater } from '@kbn/core/public';
+import { i18n } from '@kbn/i18n';
 import { QueryClient } from '@kbn/react-query';
 import { SEARCH_GETTING_STARTED_FEATURE_FLAG } from '@kbn/search-shared-ui/src/constants';
 import { PLUGIN_ID, PLUGIN_NAME, PLUGIN_PATH } from '../common';
 
+import { GETTING_STARTED_SIDENAV_TOUR_TARGET } from './components/tour/constants';
 import type {
   SearchGettingStartedPluginSetup,
   SearchGettingStartedPluginStart,
@@ -68,7 +70,10 @@ export class SearchGettingStartedPlugin
     return {};
   }
 
-  public start(core: CoreStart) {
+  public start(
+    core: CoreStart,
+    deps: SearchGettingStartedAppPluginStartDependencies
+  ): SearchGettingStartedPluginStart {
     this.featureFlagSubscription = core.featureFlags
       .getBooleanValue$(SEARCH_GETTING_STARTED_FEATURE_FLAG, true)
       .subscribe((featureFlagEnabled) => {
@@ -79,6 +84,25 @@ export class SearchGettingStartedPlugin
           status,
         }));
       });
+
+    // Register the getting started tour step with the spaces solution view tour
+    // This will show as a second step when the solution view tour is active in hosted/stack
+    if (deps.spaces?.isSolutionViewEnabled) {
+      deps.spaces.solutionViewTourManager.registerStep({
+        id: 'search-getting-started',
+        title: i18n.translate('xpack.search.gettingStarted.tour.title', {
+          defaultMessage: 'Learning content now available!',
+        }),
+        content: i18n.translate('xpack.search.gettingStarted.tour.content', {
+          defaultMessage:
+            'The Getting Started page provides a single location for learning content to help you start building with Elasticsearch.',
+        }),
+        anchor: GETTING_STARTED_SIDENAV_TOUR_TARGET,
+        anchorPosition: 'rightCenter',
+        solutions: ['es'], // Only show for Elasticsearch solution
+      });
+    }
+
     return {};
   }
 

@@ -34,6 +34,7 @@
     "@kbn/doc-links",
     "@kbn/cloud",
     "@kbn/deeplinks-search",
+    "@kbn/spaces-plugin",
   ],
   "exclude": [
     "target/**/*"

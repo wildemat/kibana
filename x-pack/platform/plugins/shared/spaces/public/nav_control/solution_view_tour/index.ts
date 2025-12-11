@@ -5,6 +5,6 @@
  * 2.0.
  */
 
-export { TourManager, type TourManagerContract } from './lib';
+export { TourManager, type TourManagerContract, type AdditionalTourStep } from './lib';
 
 export { SolutionViewTour } from './solution_view_tour';

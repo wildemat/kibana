@@ -13,6 +13,7 @@ import { QueryClient, QueryClientProvider } from '@kbn/react-query';
 import { renderWithI18n } from '@kbn/test-jest-helpers';
 
 import { NavControlPopover, type Props as NavControlPopoverProps } from './nav_control_popover';
+import { createSolutionViewTourManagerMock } from './solution_view_tour/mock';
 import type { GetSpaceResult, Space } from '../../common';
 import { EventTracker } from '../analytics';
 import type { SpacesManager } from '../spaces_manager';
@@ -76,6 +77,7 @@ describe('NavControlPopover', () => {
       onFinishTour: jest.fn(),
       manageSpacesLink: '/manage/spaces',
       manageSpacesDocsLink: 'https://elastic.co/docs',
+      tourManager: createSolutionViewTourManagerMock(),
       ...props,
     };
 

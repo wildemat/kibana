@@ -19,6 +19,7 @@
       "cloud",
       "console",
       "searchNavigation",
+      "spaces",
       "usageCollection"
     ],
     "requiredBundles": [

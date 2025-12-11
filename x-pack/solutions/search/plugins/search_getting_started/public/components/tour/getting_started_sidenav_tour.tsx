@@ -17,6 +17,7 @@ import {
 import { i18n } from '@kbn/i18n';
 import { FormattedMessage } from '@kbn/i18n-react';
 import useLocalStorage from 'react-use/lib/useLocalStorage';
+import { useKibana } from '../../hooks/use_kibana';
 import { GETTING_STARTED_SIDENAV_TOUR_KEY, GETTING_STARTED_SIDENAV_TOUR_TARGET } from './constants';
 
 /**
@@ -39,15 +40,26 @@ class TourErrorBoundary extends Component<{ children: ReactNode }, { hasError: b
  * A simple tour component that highlights the "Getting Started" link in the side navigation.
  * The tour is on by default and can be skipped or dismissed by the user.
  * The dismissed state is persisted in localStorage.
+ *
+ * When the spaces plugin's solution view tour is enabled (in hosted/stack with solution spaces),
+ * this standalone tour is not shown because the getting started step is registered as part of
+ * the solution view tour instead.
  */
 export const GettingStartedSidenavTour: React.FC = () => {
+  const { services } = useKibana();
   const [isDismissed, setIsDismissed] = useLocalStorage(GETTING_STARTED_SIDENAV_TOUR_KEY, false);
   const [isOpen, setIsOpen] = useState(false);
   const [isTargetVisible, setIsTargetVisible] = useState(false);
 
+  // Check if the solution view tour is enabled (spaces plugin is available and solution view is enabled)
+  // If so, the getting started step is shown as part of that tour instead
+  const isSolutionViewTourEnabled = services.spaces?.isSolutionViewEnabled ?? false;
+
   // Check if the target element is visible in the DOM
   useEffect(() => {
-    if (isDismissed) {
+    // Don't show standalone tour if solution view tour is enabled
+    // (the step is registered there instead)
+    if (isDismissed || isSolutionViewTourEnabled) {
       return;
     }
 
@@ -75,7 +87,7 @@ export const GettingStartedSidenavTour: React.FC = () => {
       clearInterval(pollInterval);
       clearTimeout(maxWaitTimeout);
     };
-  }, [isDismissed]);
+  }, [isDismissed, isSolutionViewTourEnabled]);
 
   const handleDismiss = useCallback(() => {
     setIsDismissed(true);
@@ -87,8 +99,11 @@ export const GettingStartedSidenavTour: React.FC = () => {
     setIsOpen(false);
   }, [setIsDismissed]);
 
-  // Don't render anything if the tour is already dismissed or target not visible
-  if (isDismissed || !isTargetVisible) {
+  // Don't render anything if:
+  // - The tour is already dismissed
+  // - The target is not visible
+  // - The solution view tour is enabled (step is shown there instead)
+  if (isDismissed || !isTargetVisible || isSolutionViewTourEnabled) {
     return null;
   }
 

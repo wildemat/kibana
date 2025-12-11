@@ -6,4 +6,8 @@
  */
 
 export { initSpacesNavControl } from './nav_control';
-export { TourManager, type TourManagerContract } from './solution_view_tour';
+export {
+  TourManager,
+  type TourManagerContract,
+  type AdditionalTourStep,
+} from './solution_view_tour';

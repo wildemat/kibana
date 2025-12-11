@@ -19,13 +19,6 @@ import { FormattedMessage } from '@kbn/i18n-react';
 import useLocalStorage from 'react-use/lib/useLocalStorage';
 import { GETTING_STARTED_SIDENAV_TOUR_KEY, GETTING_STARTED_SIDENAV_TOUR_TARGET } from './constants';
 
-export interface GettingStartedSidenavTourProps {
-  /**
-   * Whether the tour is enabled. When false, the tour will not be shown regardless of localStorage state.
-   */
-  isEnabled?: boolean;
-}
-
 /**
  * Error boundary to prevent the tour from crashing the whole app if something goes wrong.
  */
@@ -44,18 +37,17 @@ class TourErrorBoundary extends Component<{ children: ReactNode }, { hasError: b
 
 /**
  * A simple tour component that highlights the "Getting Started" link in the side navigation.
- * The tour can be progressed, skipped, and is persisted in localStorage.
+ * The tour is on by default and can be skipped or dismissed by the user.
+ * The dismissed state is persisted in localStorage.
  */
-export const GettingStartedSidenavTour: React.FC<GettingStartedSidenavTourProps> = ({
-  isEnabled = true,
-}) => {
+export const GettingStartedSidenavTour: React.FC = () => {
   const [isDismissed, setIsDismissed] = useLocalStorage(GETTING_STARTED_SIDENAV_TOUR_KEY, false);
   const [isOpen, setIsOpen] = useState(false);
   const [isTargetVisible, setIsTargetVisible] = useState(false);
 
   // Check if the target element is visible in the DOM
   useEffect(() => {
-    if (!isEnabled || isDismissed) {
+    if (isDismissed) {
       return;
     }
 
@@ -83,7 +75,7 @@ export const GettingStartedSidenavTour: React.FC<GettingStartedSidenavTourProps>
       clearInterval(pollInterval);
       clearTimeout(maxWaitTimeout);
     };
-  }, [isEnabled, isDismissed]);
+  }, [isDismissed]);
 
   const handleDismiss = useCallback(() => {
     setIsDismissed(true);
@@ -95,8 +87,8 @@ export const GettingStartedSidenavTour: React.FC<GettingStartedSidenavTourProps>
     setIsOpen(false);
   }, [setIsDismissed]);
 
-  // Don't render anything if the tour is disabled, already dismissed, or target not visible
-  if (!isEnabled || isDismissed || !isTargetVisible) {
+  // Don't render anything if the tour is already dismissed or target not visible
+  if (isDismissed || !isTargetVisible) {
     return null;
   }
 

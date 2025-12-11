@@ -16,11 +16,9 @@ import { SearchGettingStartedConnectCode } from './connect_code';
 import { GettingStartedFooter } from './footer';
 import { SearchGettingStartedHeader } from './header';
 import { GettingStartedSidenavTour } from './tour';
-import { useSidenavTourFeatureFlag } from '../hooks/use_sidenav_tour_feature_flag';
 
 export const SearchGettingStartedPage: React.FC = () => {
   const usageTracker = useUsageTracker();
-  const isTourEnabled = useSidenavTourFeatureFlag();
 
   useEffect(() => {
     usageTracker.load(AnalyticsEvents.gettingStartedLoaded);
@@ -29,7 +27,7 @@ export const SearchGettingStartedPage: React.FC = () => {
 
   return (
     <SearchGettingStartedPageTemplate>
-      <GettingStartedSidenavTour isEnabled={isTourEnabled} />
+      <GettingStartedSidenavTour />
       <EuiPageTemplate.Section data-test-subj="gettingStartedHeader" paddingSize="xl" grow={false}>
         <SearchGettingStartedHeader />
       </EuiPageTemplate.Section>

@@ -15,3 +15,5 @@ export const GETTING_STARTED_LOCALSTORAGE_KEY = 'gettingStartedVisited';
 // `searchSolution.homepage.ingestionCTA` FF is deprecated
 // SEARCH_HOMEPAGE_INGESTION_CTA_FEATURE_FLAG = 'searchSolution.homepage.ingestionCTA';
 export const SEARCH_GETTING_STARTED_FEATURE_FLAG = 'searchSolution.gettingStartedEnabled';
+export const SEARCH_GETTING_STARTED_SIDENAV_TOUR_FEATURE_FLAG =
+  'searchSolution.gettingStartedSidenavTourEnabled';

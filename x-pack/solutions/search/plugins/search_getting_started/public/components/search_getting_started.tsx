@@ -15,9 +15,11 @@ import { ConsoleTutorialsGroup } from './tutorials/console_tutorials_group';
 import { SearchGettingStartedConnectCode } from './connect_code';
 import { GettingStartedFooter } from './footer';
 import { SearchGettingStartedHeader } from './header';
+import { GettingStartedSidenavTour } from './tour';
 
 export const SearchGettingStartedPage: React.FC = () => {
   const usageTracker = useUsageTracker();
+
   useEffect(() => {
     usageTracker.load(AnalyticsEvents.gettingStartedLoaded);
     localStorage.setItem(GETTING_STARTED_LOCALSTORAGE_KEY, 'true');
@@ -25,6 +27,7 @@ export const SearchGettingStartedPage: React.FC = () => {
 
   return (
     <SearchGettingStartedPageTemplate>
+      <GettingStartedSidenavTour />
       <EuiPageTemplate.Section data-test-subj="gettingStartedHeader" paddingSize="xl" grow={false}>
         <SearchGettingStartedHeader />
       </EuiPageTemplate.Section>

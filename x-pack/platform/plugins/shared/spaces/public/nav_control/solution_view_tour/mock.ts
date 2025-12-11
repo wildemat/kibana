@@ -11,7 +11,15 @@ import type { TourManagerContract } from './lib';
 
 export const createSolutionViewTourManagerMock = (): jest.Mocked<TourManagerContract> => ({
   showTour$: of(false),
+  currentStep: of(1),
+  additionalSteps: of([]),
+  stepsTotal$: of(1),
   startTour: jest.fn().mockResolvedValue({ result: 'not_available' }),
   finishTour: jest.fn().mockResolvedValue(void 0),
   waitForTourEnd: jest.fn().mockResolvedValue(void 0),
+  registerStep: jest.fn(),
+  getCurrentStep: jest.fn().mockReturnValue(1),
+  getStepsForSolution: jest.fn().mockReturnValue([]),
+  nextStep: jest.fn(),
+  resetSteps: jest.fn(),
 });

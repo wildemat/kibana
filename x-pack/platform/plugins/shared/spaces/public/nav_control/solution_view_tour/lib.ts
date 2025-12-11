@@ -8,6 +8,7 @@
 import { BehaviorSubject, first, firstValueFrom, map } from 'rxjs';
 
 import type { CoreStart } from '@kbn/core/public';
+import type { SolutionId } from '@kbn/core-chrome-browser';
 import type { PublicContract } from '@kbn/utility-types';
 
 import {
@@ -17,13 +18,84 @@ import {
 } from '../../../common/constants';
 import type { SpacesManager } from '../../spaces_manager';
 
+/**
+ * Represents an additional tour step that can be registered by other plugins.
+ */
+export interface AdditionalTourStep {
+  /** Unique identifier for this step */
+  id: string;
+  /** Title of the tour step */
+  title: string;
+  /** Content to display in the tour step (can be a React node) */
+  content: React.ReactNode;
+  /** CSS selector to anchor the tour step to */
+  anchor: string;
+  /** Position of the tour step relative to the anchor */
+  anchorPosition?: 'rightCenter' | 'leftCenter' | 'downCenter' | 'upCenter';
+  /** Optional: Only show this step for specific solutions (e.g., ['es'] for Elasticsearch) */
+  solutions?: SolutionId[];
+}
+
 export type TourManagerContract = PublicContract<TourManager>;
 
 export class TourManager {
   private tourState$ = new BehaviorSubject<'not_started' | 'in_progress' | 'ended'>('not_started');
+  private currentStep$ = new BehaviorSubject<number>(1);
+  private additionalSteps$ = new BehaviorSubject<AdditionalTourStep[]>([]);
+
   showTour$ = this.tourState$.pipe(map((state) => state === 'in_progress'));
+  currentStep = this.currentStep$.asObservable();
+  additionalSteps = this.additionalSteps$.asObservable();
+
+  /**
+   * Observable that emits the total number of steps (1 base + additional steps)
+   */
+  stepsTotal$ = this.additionalSteps$.pipe(map((steps) => 1 + steps.length));
 
   constructor(private core: () => Promise<CoreStart>, private spacesManager: SpacesManager) {}
+
+  /**
+   * Register an additional tour step to be shown after the solution view step.
+   * Steps are shown in the order they are registered.
+   */
+  registerStep(step: AdditionalTourStep): void {
+    const currentSteps = this.additionalSteps$.getValue();
+    // Avoid duplicate registrations
+    if (!currentSteps.find((s) => s.id === step.id)) {
+      this.additionalSteps$.next([...currentSteps, step]);
+    }
+  }
+
+  /**
+   * Get the current step number
+   */
+  getCurrentStep(): number {
+    return this.currentStep$.getValue();
+  }
+
+  /**
+   * Get all additional steps filtered by solution (if applicable)
+   */
+  getStepsForSolution(solution?: SolutionId): AdditionalTourStep[] {
+    const allSteps = this.additionalSteps$.getValue();
+    if (!solution) return [];
+    return allSteps.filter((step) => !step.solutions || step.solutions.includes(solution));
+  }
+
+  /**
+   * Move to the next step in the tour
+   */
+  nextStep(): void {
+    const current = this.currentStep$.getValue();
+    this.currentStep$.next(current + 1);
+  }
+
+  /**
+   * Reset to the first step
+   */
+  resetSteps(): void {
+    this.currentStep$.next(1);
+  }
 
   async startTour(): Promise<{ result: 'not_available' | 'started' }> {
     const core = await this.core();
@@ -49,6 +121,7 @@ export class TourManager {
 
   async finishTour(): Promise<void> {
     this.tourState$.next('ended');
+    this.resetSteps();
     await preserveTourCompletion(await this.core());
   }
 

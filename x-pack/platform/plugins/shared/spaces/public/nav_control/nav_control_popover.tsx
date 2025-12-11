@@ -12,15 +12,18 @@ import {
   EuiSkeletonRectangle,
   useEuiTheme,
 } from '@elastic/eui';
-import React, { lazy, Suspense, useCallback, useEffect, useState } from 'react';
+import React, { lazy, Suspense, useCallback, useEffect, useMemo, useState } from 'react';
+import useObservable from 'react-use/lib/useObservable';
 import type { Observable } from 'rxjs';
 
 import type { ApplicationStart, Capabilities } from '@kbn/core/public';
+import type { SolutionId } from '@kbn/core-chrome-browser';
 import { i18n } from '@kbn/i18n';
 import { useQueryClient } from '@kbn/react-query';
 
 import { SpacesMenu } from './components/spaces_menu';
 import { SPACES_QUERY_KEY, useSpaces } from './hooks/use_spaces';
+import type { TourManagerContract } from './solution_view_tour';
 import { SolutionViewTour } from './solution_view_tour';
 import type { Space } from '../../common';
 import type { EventTracker } from '../analytics';
@@ -45,6 +48,7 @@ export interface Props {
   onFinishTour: () => void;
   manageSpacesDocsLink: string;
   manageSpacesLink: string;
+  tourManager: TourManagerContract;
 }
 
 const popoutContentId = 'headerSpacesMenuContent';
@@ -62,6 +66,7 @@ const NavControlPopoverUI = ({
   onFinishTour,
   manageSpacesDocsLink,
   manageSpacesLink,
+  tourManager,
 }: Props) => {
   const { euiTheme } = useEuiTheme();
   const queryClient = useQueryClient();
@@ -69,6 +74,21 @@ const NavControlPopoverUI = ({
   const [activeSpace, setActiveSpace] = useState<Space | null>(null);
   const [showTour, setShowTour] = useState(false);
   const { data, isLoading } = useSpaces(spacesManager);
+
+  // Subscribe to tour manager state
+  const currentStep = useObservable(tourManager.currentStep, 1);
+
+  // Filter additional steps based on the current solution
+  const additionalSteps = useMemo(() => {
+    const solution = activeSpace?.solution as SolutionId | undefined;
+    return tourManager.getStepsForSolution(solution);
+  }, [activeSpace?.solution, tourManager]);
+
+  const stepsTotal = 1 + additionalSteps.length;
+
+  const handleNextStep = useCallback(() => {
+    tourManager.nextStep();
+  }, [tourManager]);
 
   useEffect(() => {
     const activeSpace$ = spacesManager.onActiveSpaceChange$.subscribe({
@@ -171,6 +191,10 @@ const NavControlPopoverUI = ({
       manageSpacesLink={manageSpacesLink}
       manageSpacesDocsLink={manageSpacesDocsLink}
       navigateToUrl={navigateToUrl}
+      currentStep={currentStep}
+      stepsTotal={stepsTotal}
+      onNextStep={handleNextStep}
+      additionalSteps={additionalSteps}
     >
       <EuiPopover
         id="spcMenuPopover"

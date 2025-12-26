@@ -27,7 +27,7 @@ export const EIS_CLOUD_CONNECT_PROMO_TOUR_TITLE = i18n.translate(
 );
 
 export const EIS_COSTS_TOUR_TITLE = i18n.translate('searchApiPanels.eisCosts.tour.title', {
-  defaultMessage: 'Elastic Inference Service (EIS) now available',
+  defaultMessage: 'Understanding inference costs',
 });
 
 export const EIS_UPDATE_CALLOUT_TITLE = i18n.translate('searchApiPanels.eisUpdate.callout.title', {
@@ -63,7 +63,7 @@ export const EIS_COSTS_TOUR_DESCRIPTION = i18n.translate(
   'searchApiPanels.eisCosts.tour.description',
   {
     defaultMessage:
-      'Performing inference, NLP tasks, and other ML activities on the Elastic Inference Service (EIS) incurs additional costs for tokens.',
+      'Using semantic_text requires an inference endpoint to process your data. Depending on your configuration, this will incur additional costs based on either Machine Learning (ML) node usage or token consumption',
   }
 );
 

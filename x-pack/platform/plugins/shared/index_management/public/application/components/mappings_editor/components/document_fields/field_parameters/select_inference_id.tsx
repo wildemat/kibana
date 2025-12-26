@@ -218,7 +218,7 @@ const SelectInferenceIdContent: React.FC<SelectInferenceIdContentProps> = ({
                 <EuiSpacer size="xs" />
                 <EisTokenCostTour
                   promoId="tokenConsumptionCost"
-                  ctaLink={documentationService.getEisDocumentationLink()}
+                  ctaLink={documentationService.getCloudPricing()}
                   isCloudEnabled={cloud?.isCloudEnabled ?? false}
                   isReady={isSelectInferenceIdOpen}
                 >

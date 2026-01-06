@@ -59,14 +59,6 @@ export const EIS_CLOUD_CONNECT_PROMO_DESCRIPTION = i18n.translate(
   }
 );
 
-export const EIS_COSTS_TOUR_DESCRIPTION = i18n.translate(
-  'searchApiPanels.eisCosts.tour.description',
-  {
-    defaultMessage:
-      'Using semantic_text requires an inference endpoint to process your data. Depending on your configuration, this will incur additional costs based on either Machine Learning (ML) node usage or token consumption',
-  }
-);
-
 export const EIS_UPDATE_CALLOUT_DESCRIPTION = i18n.translate(
   'searchApiPanels.eisUpdate.callout.description',
   {

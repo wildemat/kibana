@@ -9,7 +9,15 @@
 
 import React from 'react';
 import type { EuiTourStepProps } from '@elastic/eui';
-import { EuiButton, EuiButtonEmpty, EuiText, EuiTourStep, useEuiTheme } from '@elastic/eui';
+import {
+  EuiButton,
+  EuiButtonEmpty,
+  EuiCode,
+  EuiText,
+  EuiTourStep,
+  useEuiTheme,
+} from '@elastic/eui';
+import { FormattedMessage } from '@kbn/i18n-react';
 import * as i18n from '../translations';
 import { useShowEisPromotionalContent } from '../hooks/use_show_eis_promotional_content';
 
@@ -71,7 +79,15 @@ export const EisTokenCostTour = ({
       maxWidth={`${euiTheme.base * 25}px`}
       content={
         <EuiText>
-          <p>{i18n.EIS_COSTS_TOUR_DESCRIPTION}</p>
+          <p>
+            <FormattedMessage
+              id="searchApiPanels.eisCosts.tour.description"
+              defaultMessage="Using {semanticText} requires an inference endpoint to process your data. Depending on your configuration, this will incur additional costs based on either Machine Learning (ML) node usage or token consumption."
+              values={{
+                semanticText: <EuiCode>semantic_text</EuiCode>,
+              }}
+            />
+          </p>
         </EuiText>
       }
       isStepOpen={isPromoVisible}

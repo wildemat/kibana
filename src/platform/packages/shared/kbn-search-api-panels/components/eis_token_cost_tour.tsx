@@ -82,7 +82,7 @@ export const EisTokenCostTour = ({
           <p>
             <FormattedMessage
               id="searchApiPanels.eisCosts.tour.description"
-              defaultMessage="Using {semanticText} requires an inference endpoint to process your data. Depending on your configuration, this will incur additional costs based on either Machine Learning (ML) node usage or token consumption."
+              defaultMessage="Using {semanticText} requires an inference endpoint and may incur costs based on Elastic Inference Service token usage or Machine Learning (ML) node usage, depending on your configuration."
               values={{
                 semanticText: <EuiCode>semantic_text</EuiCode>,
               }}

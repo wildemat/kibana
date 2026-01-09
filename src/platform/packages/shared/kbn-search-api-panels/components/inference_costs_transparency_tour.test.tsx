@@ -11,22 +11,24 @@ import React from 'react';
 import '@testing-library/jest-dom';
 import { renderWithI18n } from '@kbn/test-jest-helpers';
 import { fireEvent, screen } from '@testing-library/react';
-import { EisTokenCostTour } from './eis_token_cost_tour';
+import { InferenceCostsTransparencyTour } from './inference_costs_transparency_tour';
 import { useShowEisPromotionalContent } from '../hooks/use_show_eis_promotional_content';
 import * as i18n from '../translations';
 
 jest.mock('../hooks/use_show_eis_promotional_content');
 
-describe('EisTokenCostTour', () => {
+describe('InferenceCostsTransparencyTour', () => {
   const promoId = 'tokenPromo';
-  const dataId = `${promoId}-eis-costs-tour`;
+  const dataId = `${promoId}-inference-costs-tour`;
   const childTestId = 'tourChild';
 
-  const renderComponent = (props: Partial<React.ComponentProps<typeof EisTokenCostTour>> = {}) =>
+  const renderComponent = (
+    props: Partial<React.ComponentProps<typeof InferenceCostsTransparencyTour>> = {}
+  ) =>
     renderWithI18n(
-      <EisTokenCostTour promoId={promoId} isCloudEnabled={true} {...props}>
+      <InferenceCostsTransparencyTour promoId={promoId} isCloudEnabled={true} {...props}>
         <span data-test-subj={childTestId} />
-      </EisTokenCostTour>
+      </InferenceCostsTransparencyTour>
     );
 
   beforeEach(() => {
@@ -75,7 +77,7 @@ describe('EisTokenCostTour', () => {
     expect(screen.getByTestId(childTestId)).toBeInTheDocument();
 
     // Title should render
-    expect(screen.getByText(i18n.EIS_COSTS_TOUR_TITLE)).toBeInTheDocument();
+    expect(screen.getByText(i18n.COSTS_TOUR_TITLE)).toBeInTheDocument();
   });
 
   it('renders CTA button and passes href when ctaLink is provided', () => {
@@ -88,11 +90,11 @@ describe('EisTokenCostTour', () => {
 
     renderComponent({ ctaLink });
 
-    const ctaBtn = screen.getByTestId('eisCostsTourCtaBtn');
+    const ctaBtn = screen.getByTestId('inferenceCostsTourCtaBtn');
 
     expect(ctaBtn).toBeInTheDocument();
     expect(ctaBtn).toHaveAttribute('href', ctaLink);
-    expect(ctaBtn).toHaveTextContent(i18n.EIS_TOUR_CTA);
+    expect(ctaBtn).toHaveTextContent(i18n.TOUR_CTA);
   });
 
   it('does not render CTA button when ctaLink is undefined', () => {
@@ -103,7 +105,7 @@ describe('EisTokenCostTour', () => {
 
     renderComponent({ ctaLink: undefined });
 
-    const ctaBtn = screen.queryByTestId('eisCostsTourCtaBtn');
+    const ctaBtn = screen.queryByTestId('inferenceCostsTourCtaBtn');
     expect(ctaBtn).not.toBeInTheDocument();
   });
 
@@ -124,13 +126,13 @@ describe('EisTokenCostTour', () => {
 
     expect(screen.getByTestId(dataId)).toBeInTheDocument();
 
-    fireEvent.click(screen.getByTestId('tokenConsumptionCostTourCloseBtn'));
+    fireEvent.click(screen.getByTestId('inferenceCostsTourCloseBtn'));
     expect(mockOnDismissPromo).toHaveBeenCalledTimes(1);
 
     rerender(
-      <EisTokenCostTour promoId={promoId} isCloudEnabled={true}>
+      <InferenceCostsTransparencyTour promoId={promoId} isCloudEnabled={true}>
         <span data-test-subj={childTestId} />
-      </EisTokenCostTour>
+      </InferenceCostsTransparencyTour>
     );
 
     expect(screen.queryByTestId(dataId)).not.toBeInTheDocument();

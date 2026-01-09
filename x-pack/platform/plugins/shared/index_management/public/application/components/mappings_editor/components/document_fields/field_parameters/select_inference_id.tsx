@@ -28,7 +28,7 @@ import {
 } from '@elastic/eui';
 import { i18n } from '@kbn/i18n';
 import { defaultInferenceEndpoints } from '@kbn/inference-common';
-import { EisTokenCostTour } from '@kbn/search-api-panels';
+import { InferenceCostsTransparencyTour } from '@kbn/search-api-panels';
 
 import {
   INFERENCE_ENDPOINT_LICENSE_MAP,
@@ -273,7 +273,7 @@ const SelectInferenceIdContent: React.FC<SelectInferenceIdContentProps> = ({
 
   /**
    * Sets state to indicate the dropdown select is open after a delay to match animation timing.
-   * This ensures the EisTokenCostTour component displays in the right place after the initial
+   * This ensures the InferenceCostsTransparencyTour component displays in the right place after the initial
    * animation completes.
    */
   useEffect(() => {
@@ -300,8 +300,8 @@ const SelectInferenceIdContent: React.FC<SelectInferenceIdContentProps> = ({
                   </p>
                 </EuiText>
                 <EuiSpacer size="xs" />
-                <EisTokenCostTour
-                  promoId="tokenConsumptionCost"
+                <InferenceCostsTransparencyTour
+                  promoId="selectInferenceId"
                   ctaLink={documentationService.getCloudPricing()}
                   isCloudEnabled={cloud?.isCloudEnabled ?? false}
                   isReady={isSelectInferenceIdOpen}
@@ -323,7 +323,7 @@ const SelectInferenceIdContent: React.FC<SelectInferenceIdContentProps> = ({
                         { defaultMessage: 'No inference endpoint selected' }
                       )}
                   </EuiButton>
-                </EisTokenCostTour>
+                </InferenceCostsTransparencyTour>
               </>
             }
             isOpen={isInferencePopoverVisible}

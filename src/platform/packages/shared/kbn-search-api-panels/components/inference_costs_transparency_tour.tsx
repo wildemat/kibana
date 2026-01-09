@@ -22,7 +22,7 @@ import * as i18n from '../translations';
 import { useShowEisPromotionalContent } from '../hooks/use_show_eis_promotional_content';
 
 /**
- * Props for the EisTokenCostTour component.
+ * Props for the InferenceCostsTransparencyTour component.
  *
  * @property {EuiTourStepProps['anchorPosition']} [anchorPosition='downCenter']
  *   Position of the tour step relative to its anchor element.
@@ -45,7 +45,7 @@ import { useShowEisPromotionalContent } from '../hooks/use_show_eis_promotional_
  *   The anchor element for the tour step. The tour wraps this element.
  */
 
-export interface EisTokenCostTourProps {
+export interface InferenceCostsTransparencyTourProps {
   anchorPosition?: EuiTourStepProps['anchorPosition'];
   ctaLink?: string;
   promoId: string;
@@ -54,19 +54,19 @@ export interface EisTokenCostTourProps {
   children: React.ReactElement;
 }
 
-export const EisTokenCostTour = ({
+export const InferenceCostsTransparencyTour = ({
   anchorPosition = 'downCenter',
   ctaLink,
   promoId,
   isCloudEnabled,
   isReady = true,
   children,
-}: EisTokenCostTourProps) => {
+}: InferenceCostsTransparencyTourProps) => {
   const { euiTheme } = useEuiTheme();
   const { isPromoVisible, onDismissPromo } = useShowEisPromotionalContent({
-    promoId: `${promoId}EisCostsTour`,
+    promoId: `${promoId}InferenceCostsTransparencyTour`,
   });
-  const dataId = `${promoId}-eis-costs-tour`;
+  const dataId = `${promoId}-inference-costs-tour`;
 
   if (!isPromoVisible || !isReady || !isCloudEnabled) {
     return children;
@@ -75,13 +75,13 @@ export const EisTokenCostTour = ({
   return (
     <EuiTourStep
       data-test-subj={dataId}
-      title={i18n.EIS_COSTS_TOUR_TITLE}
+      title={i18n.COSTS_TOUR_TITLE}
       maxWidth={`${euiTheme.base * 25}px`}
       content={
         <EuiText>
           <p>
             <FormattedMessage
-              id="searchApiPanels.eisCosts.tour.description"
+              id="searchApiPanels.inferenceCosts.tour.description"
               defaultMessage="Using {semanticText} requires an inference endpoint and may incur costs based on Elastic Inference Service token usage or Machine Learning (ML) node usage, depending on your configuration."
               values={{
                 semanticText: <EuiCode>semantic_text</EuiCode>,
@@ -97,12 +97,12 @@ export const EisTokenCostTour = ({
       onFinish={onDismissPromo}
       footerAction={[
         <EuiButtonEmpty
-          data-test-subj="tokenConsumptionCostTourCloseBtn"
+          data-test-subj="inferenceCostsTourCloseBtn"
           data-telemetry-id={`${dataId}-dismiss-btn`}
           onClick={onDismissPromo}
-          aria-label={i18n.EIS_COSTS_TOUR_DISMISS_ARIA}
+          aria-label={i18n.COSTS_TOUR_DISMISS_ARIA}
         >
-          {i18n.EIS_TOUR_DISMISS}
+          {i18n.TOUR_DISMISS}
         </EuiButtonEmpty>,
         ...(ctaLink
           ? [
@@ -111,13 +111,13 @@ export const EisTokenCostTour = ({
                 color="primary"
                 size="s"
                 href={ctaLink}
-                data-test-subj="eisCostsTourCtaBtn"
+                data-test-subj="inferenceCostsTourCtaBtn"
                 data-telemetry-id={`${dataId}-learnMore-btn`}
                 target="_blank"
                 iconSide="right"
                 iconType="popout"
               >
-                {i18n.EIS_TOUR_CTA}
+                {i18n.TOUR_CTA}
               </EuiButton>,
             ]
           : []),

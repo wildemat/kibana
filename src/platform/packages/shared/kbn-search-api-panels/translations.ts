@@ -26,7 +26,7 @@ export const EIS_CLOUD_CONNECT_PROMO_TOUR_TITLE = i18n.translate(
   }
 );
 
-export const EIS_COSTS_TOUR_TITLE = i18n.translate('searchApiPanels.eisCosts.tour.title', {
+export const COSTS_TOUR_TITLE = i18n.translate('searchApiPanels.eisCosts.tour.title', {
   defaultMessage: 'Understanding inference costs',
 });
 
@@ -76,7 +76,7 @@ export const EIS_CALLOUT_DOCUMENTATION_BTN = i18n.translate(
   }
 );
 
-export const EIS_TOUR_CTA = i18n.translate('searchApiPanels.eis.tour.cta', {
+export const TOUR_CTA = i18n.translate('searchApiPanels.eis.tour.cta', {
   defaultMessage: 'Learn more',
 });
 
@@ -92,14 +92,14 @@ export const EIS_CLOUD_CONNECT_PROMO_TOUR_CTA = i18n.translate(
 
 // DISMISS BUTTON
 
-export const EIS_TOUR_DISMISS = i18n.translate('searchApiPanels.eis.tour.dismiss', {
+export const TOUR_DISMISS = i18n.translate('searchApiPanels.eis.tour.dismiss', {
   defaultMessage: 'Dismiss',
 });
 
-export const EIS_COSTS_TOUR_DISMISS_ARIA = i18n.translate(
-  'searchApiPanels.eisCosts.tour.dismiss.aria',
+export const COSTS_TOUR_DISMISS_ARIA = i18n.translate(
+  'searchApiPanels.inferenceCosts.tour.dismiss.aria',
   {
-    defaultMessage: 'Close the Elastic Inference Service cost tour',
+    defaultMessage: 'Close the inference endpoints cost tour',
   }
 );
 

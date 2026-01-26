@@ -15,6 +15,7 @@ import { ConsoleTutorialsGroup } from './tutorials/console_tutorials_group';
 import { SearchGettingStartedConnectCode } from './connect_code';
 import { GettingStartedFooter } from './footer';
 import { SearchGettingStartedHeader } from './header';
+import { ConsoleGuide } from './console_guide';
 
 export const SearchGettingStartedPage: React.FC = () => {
   const usageTracker = useUsageTracker();
@@ -27,6 +28,9 @@ export const SearchGettingStartedPage: React.FC = () => {
     <SearchGettingStartedPageTemplate>
       <EuiPageTemplate.Section data-test-subj="gettingStartedHeader" paddingSize="xl" grow={false}>
         <SearchGettingStartedHeader />
+      </EuiPageTemplate.Section>
+      <EuiPageTemplate.Section>
+        <ConsoleGuide code="GET /_search" />
       </EuiPageTemplate.Section>
       <EuiPageTemplate.Section data-test-subj="gettingStartedConsoleTutorials" paddingSize="xl">
         <ConsoleTutorialsGroup />

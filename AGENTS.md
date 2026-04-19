@@ -2,6 +2,7 @@
 
 ## Setup
 - Run `yarn kbn bootstrap` for initial setup, after switching branches, or when encountering dependency errors
+- Use `yarn kbn-dev` to start the dual-mode dev environment (serverless + stateful). See `/kbn-dev` skill.
 
 ## Overview
 - Kibana is organized into modules, each defined by a `kibana.jsonc`: core, packages, and plugin packages. Aside from tooling and testing, most code lives in these modules.

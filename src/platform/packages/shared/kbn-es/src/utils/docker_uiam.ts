@@ -346,6 +346,24 @@ export const UIAM_CONTAINERS = UIAM_BASE_CONTAINERS;
  * Run a single UIAM-related container.
  */
 export async function runUiamContainer(log: ToolingLog, container: UiamContainer) {
+  // If the container is already running and healthy, reuse it
+  try {
+    const { stdout: existingStatus } = await execa('docker', [
+      'inspect',
+      '-f',
+      '{{.State.Health.Status}}',
+      container.name,
+    ]);
+    if (existingStatus.trim() === 'healthy') {
+      log.info(
+        chalk.bold(`"${container.name}" container is already running and healthy — reusing.`)
+      );
+      return container.name;
+    }
+  } catch {
+    // Container doesn't exist — proceed with creation
+  }
+
   const dockerCommand = SHARED_DOCKER_PARAMS.concat(
     container.params,
     ['--name', container.name],

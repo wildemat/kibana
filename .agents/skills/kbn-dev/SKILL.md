@@ -155,6 +155,28 @@ once at the start of a shell session, then run yarn commands normally.
 
 Components: `essls`, `esstack`, `optimizer`, `kbnsls`, `kbnstack`, `main`, `all`
 
+### Viewing logs
+
+**"Open the logs" / "show me all logs":**
+The tmux log viewer requires an interactive terminal, so you can't attach
+to it directly. Tell the user to run it themselves:
+
+> Run `yarn kbn-dev-ctl attach` in your terminal to open the tmux log
+> viewer with all four panes (ES Serverless, ES Stateful, Kibana SLS,
+> Kibana Stack).
+
+**Showing logs inline (what you CAN do):**
+Use `yarn kbn-dev-ctl logs <component>` to show logs in the agent shell.
+This works for targeted requests like "show me serverless errors":
+
+```bash
+yarn kbn-dev-ctl logs kbnsls --tail 50              # last 50 lines
+yarn kbn-dev-ctl logs all --grep "ERROR|FATAL"       # errors across all
+yarn kbn-dev-ctl logs essls --tail 20 --grep error   # ES serverless errors
+```
+
+Do NOT try to open terminal tabs, run AppleScript, or `tail -f` manually.
+
 ## When to restart
 
 Check `yarn kbn-dev-ctl status --json` and restart if a component shows

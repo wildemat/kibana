@@ -39,12 +39,14 @@
 # Interactive prompts auto-accept and verbose banners are suppressed.
 INTERACTIVE=true
 [ -t 0 ] || INTERACTIVE=false
+SHUTTING_DOWN=false
 
 # =============================================================================
 # Utility functions
 # =============================================================================
 
 log_step() {
+  [ "$SHUTTING_DOWN" = true ] && return
   local msg="$1"
   local logfile="${2:-}"
   local line
@@ -367,6 +369,7 @@ STACK_CHROME_PID=""
 
 # --- Cleanup on exit --------------------------------------------------------
 cleanup() {
+  SHUTTING_DOWN=true
   set +m 2>/dev/null
   echo ""
   echo "Stopping all processes..."

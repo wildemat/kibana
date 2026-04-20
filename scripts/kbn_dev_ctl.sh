@@ -246,7 +246,19 @@ cmd_restart() {
     echo "  No process listening on port $port"
   fi
 
-  echo "  The monitor_process loop in kbn-dev will auto-restart $comp."
+  # Verify the ES cluster backing this Kibana instance is reachable
+  local es_port
+  [ "$comp" = "kbnsls" ] && es_port=9200 || es_port=9201
+  local es_code
+  es_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$es_port" 2>/dev/null || echo "000")
+  if [ "$es_code" = "000" ]; then
+    echo ""
+    echo "  WARNING: ES on port $es_port is not responding."
+    echo "  Kibana will not start without ES. You may need a full restart:"
+    echo "    yarn kbn-dev-ctl stop && yarn kbn-dev"
+  else
+    echo "  The monitor_process loop in kbn-dev will auto-restart $comp."
+  fi
   echo "  Watch the logs: tail -f $(component_log "$comp")"
 }
 

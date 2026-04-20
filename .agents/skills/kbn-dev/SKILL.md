@@ -66,7 +66,8 @@ state. The key fields are `"running"` (is the orchestrator PID alive) and
   Report what's up and what's down. Offer to restart the failed component.
 - **`"running": false`**: Start it (steps 1-5 below).
 
-If the user says "restart kibana", use `yarn kbn-dev-ctl stop` then start fresh.
+If the user says "restart kibana", use `yarn kbn-dev-ctl restart all`.
+Restart always does a full stop + start (ES + Kibana together).
 
 **Starting Kibana is a background task.** Don't show the user every poll
 cycle. Follow this pattern:
@@ -125,17 +126,23 @@ one message when ready (or failed).
 | Status (human) | `yarn kbn-dev-ctl status` |
 | Logs | `yarn kbn-dev-ctl logs <component> [--tail N] [--grep PATTERN]` |
 | Attach tmux | `yarn kbn-dev-ctl attach` |
-| Restart Kibana | `yarn kbn-dev-ctl restart <kbnsls\|kbnstack>` |
+| Restart | `yarn kbn-dev-ctl restart <serverless\|stateful\|all>` |
 | Stop | `yarn kbn-dev-ctl stop` |
 
 Components: `essls`, `esstack`, `optimizer`, `kbnsls`, `kbnstack`, `main`, `all`
 
-## When to restart Kibana
+## When to restart
 
-Check `yarn kbn-dev-ctl status --json` and restart if a Kibana component shows
+Check `yarn kbn-dev-ctl status --json` and restart if a component shows
 `"alive": false` — common after branch switches, plugin code changes,
-or config edits. The monitor loop in `kbn-dev` auto-restarts after the kill.
-ES clusters and the optimizer stay running.
+or config edits. Restart always does a full stop + start (ES + Kibana
+together), never just Kibana alone.
+
+```bash
+yarn kbn-dev-ctl restart serverless   # restart ES Serverless + Kibana SLS
+yarn kbn-dev-ctl restart stateful     # restart ES Stateful + Kibana Stack
+yarn kbn-dev-ctl restart all          # restart everything
+```
 
 ## Instance details and authentication
 
@@ -179,7 +186,7 @@ codes, or error messages.
 
 See [failure-modes.md](failure-modes.md) for detailed patterns. Key fixes:
 - **Node mismatch**: `nvm install $(cat .nvmrc)`
-- **Port in use**: `yarn kbn-dev-ctl restart <component>`
+- **Port in use**: `yarn kbn-dev-ctl restart all`
 - **Docker not running**: start Docker
 - **After branch switch**: `yarn kbn-dev --quiet --clean`
 - **Vault failed**: `KBN_INFERENCE_URL="" yarn kbn-dev --quiet`
@@ -219,5 +226,6 @@ use the browser to navigate there and verify visually.
 ## Proactive monitoring
 
 After editing `.ts`, `.tsx`, `.yml`, or config files, silently run
-`yarn kbn-dev-ctl status --json`. If a component is down, restart it and tell
-the user briefly: "Kibana SLS crashed, restarting..."
+`yarn kbn-dev-ctl status --json`. If a component is down, run
+`yarn kbn-dev-ctl restart serverless` (or `stateful`) and tell the user
+briefly: "Kibana SLS crashed, restarting..."

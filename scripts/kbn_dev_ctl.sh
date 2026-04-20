@@ -216,52 +216,43 @@ cmd_logs() {
 # --- restart ----------------------------------------------------------------
 cmd_restart() {
   local comp="${1:-}"
-  if [ "$comp" != "kbnsls" ] && [ "$comp" != "kbnstack" ]; then
-    echo "Usage: yarn kbn-dev-ctl restart <kbnsls|kbnstack>"
-    echo "  Only Kibana processes support restart (ES clusters and optimizer stay running)."
+  if [ "$comp" != "kbnsls" ] && [ "$comp" != "kbnstack" ] && [ "$comp" != "serverless" ] && [ "$comp" != "stateful" ] && [ "$comp" != "all" ]; then
+    echo "Usage: yarn kbn-dev-ctl restart <serverless|stateful|all>"
+    echo "  Restarts both ES and Kibana for the given mode."
+    echo "  Aliases: kbnsls = serverless, kbnstack = stateful"
     exit 1
   fi
 
-  local port pidfile
-  if [ "$comp" = "kbnsls" ]; then
-    port=5601
-    pidfile="$LOG_DIR/kbnsls.pid"
-  else
-    port=5611
-    pidfile="$LOG_DIR/kbnstack.pid"
-  fi
+  # Normalize aliases
+  [ "$comp" = "kbnsls" ] && comp="serverless"
+  [ "$comp" = "kbnstack" ] && comp="stateful"
 
-  echo "Restarting $comp..."
+  echo "Restarting $comp — this does a full stop + start."
+  echo ""
 
-  # Kill the Kibana process listening on its port
-  local kbn_port_pid
-  kbn_port_pid=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN -t 2>/dev/null | head -1)
-  if [ -n "$kbn_port_pid" ]; then
-    echo "  Killing PID $kbn_port_pid on port $port"
-    kill "$kbn_port_pid" 2>/dev/null || true
-    sleep 2
-    if kill -0 "$kbn_port_pid" 2>/dev/null; then
-      echo "  Force-killing PID $kbn_port_pid"
-      kill -9 "$kbn_port_pid" 2>/dev/null || true
-    fi
-  else
-    echo "  No process listening on port $port"
-  fi
+  cmd_stop
+  sleep 3
 
-  # Verify the ES cluster backing this Kibana instance is reachable
-  local es_port
-  [ "$comp" = "kbnsls" ] && es_port=9200 || es_port=9201
-  local es_code
-  es_code=$(curl -s -o /dev/null -w "%{http_code}" "http://localhost:$es_port" 2>/dev/null || echo "000")
-  if [ "$es_code" = "000" ]; then
+  if ! [ -f "package.json" ] || ! grep -q '"name": "kibana"' package.json 2>/dev/null; then
     echo ""
-    echo "  ERROR: ES on port $es_port is not responding."
-    echo "  Kibana cannot start without ES. A full restart is needed:"
-    echo "    yarn kbn-dev-ctl stop && yarn kbn-dev"
-    exit 1
+    echo "  Stopped. To start again, run from the kibana repo root:"
+    echo "    yarn kbn-dev"
+    return
   fi
-  echo "  The monitor_process loop will auto-restart $comp."
-  echo "  Watch the logs: tail -f $(component_log "$comp")"
+
+  if ! command -v kbn >/dev/null 2>&1 && ! [ -f "scripts/kbn_dev.sh" ]; then
+    echo ""
+    echo "  Stopped. To start again: yarn kbn-dev"
+    return
+  fi
+
+  echo ""
+  echo "  Starting kbn-dev..."
+  if [ -f "scripts/kbn_dev.sh" ]; then
+    exec bash scripts/kbn_dev.sh --quiet
+  else
+    exec kbn --quiet
+  fi
 }
 
 # --- stop -------------------------------------------------------------------
@@ -293,7 +284,7 @@ case "${1:-status}" in
     echo "  status [--json]              Show component health"
     echo "  logs <component> [options]   View component logs"
     echo "  attach                       Attach to the tmux log viewer"
-    echo "  restart <kbnsls|kbnstack>    Restart a Kibana instance"
+    echo "  restart <serverless|stateful|all>  Full restart (ES + Kibana)"
     echo "  stop                         Stop the kbn-dev instance"
     echo ""
     echo "Components: essls, esstack, optimizer, kbnsls, kbnstack, main, all"

@@ -8,13 +8,15 @@ Reference for diagnosing and fixing common kbn-dev startup and runtime failures.
 
 **Symptom:** `yarn kbn-dev-ctl status` shows everything down, logs are nearly empty.
 
-**Likely cause:** Wrong Node.js version. The subshells picked up a system
-node instead of the nvm-managed version.
+**Likely cause:** Wrong Node.js version. Agent shells don't load nvm, so
+the system node doesn't match kibana's `.nvmrc`.
 
 **Fix:**
 ```bash
+# Source nvm first (required for all yarn commands in agent shells)
+source "${NVM_DIR:-$HOME/.nvm}/nvm.sh" --no-use && nvm use --silent
 yarn kbn-dev-ctl logs main --grep "incompatible\|Expected version"
-# If node mismatch: nvm install $(cat .nvmrc) && nvm use
+# If node mismatch: nvm install $(cat .nvmrc)
 ```
 
 ### ES clusters fail to start

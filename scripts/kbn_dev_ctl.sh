@@ -19,6 +19,22 @@
 
 set -euo pipefail
 
+# --- Node / nvm setup -------------------------------------------------------
+# Agent shells (Claude Code, Cursor, CI) don't load nvm by default, so yarn
+# commands fail with "The engine node is incompatible". Source nvm here so
+# every subcommand sees the right node binary.
+if [ -s "${NVM_DIR:-$HOME/.nvm}/nvm.sh" ]; then
+  export NVM_DIR="${NVM_DIR:-$HOME/.nvm}"
+  # shellcheck disable=SC1091
+  . "$NVM_DIR/nvm.sh" --no-use
+  if [ -f ".nvmrc" ]; then
+    nvm use --silent 2>/dev/null || true
+  fi
+  if [ -n "${NVM_BIN:-}" ]; then
+    export PATH="$NVM_BIN:$PATH"
+  fi
+fi
+
 # --- Locate log directory ---------------------------------------------------
 find_log_dir() {
   local d="${KBN_LOG_DIR:-$HOME/.kbn/logs}"
@@ -61,7 +77,12 @@ check_ready() {
 }
 
 # --- status -----------------------------------------------------------------
+# Disable errexit/pipefail for the status function. A grep no-match (exit 1)
+# inside a pipeline with pipefail + set -e kills the script before any output,
+# causing false "not running" reports from skill dynamic injection fallbacks.
 cmd_status() {
+  set +eo pipefail
+
   local json_mode=false
   [ "${1:-}" = "--json" ] && json_mode=true
 
@@ -75,11 +96,11 @@ cmd_status() {
 
   local essls_pid="" esstack_pid="" optimizer_pid="" kbnsls_pid="" kbnstack_pid=""
   if [ -f "$STATUS_FILE" ]; then
-    essls_pid=$(grep -o '"essls".*"pid": *"[^"]*"' "$STATUS_FILE" 2>/dev/null | grep -o '"pid": *"[^"]*"' | head -1 | sed 's/.*"pid": *"//;s/"//g')
-    esstack_pid=$(grep -o '"esstack".*"pid": *"[^"]*"' "$STATUS_FILE" 2>/dev/null | grep -o '"pid": *"[^"]*"' | head -1 | sed 's/.*"pid": *"//;s/"//g')
-    optimizer_pid=$(grep -o '"optimizer".*"pid": *"[^"]*"' "$STATUS_FILE" 2>/dev/null | grep -o '"pid": *"[^"]*"' | head -1 | sed 's/.*"pid": *"//;s/"//g')
-    kbnsls_pid=$(grep -o '"kbnsls".*"pid": *"[^"]*"' "$STATUS_FILE" 2>/dev/null | grep -o '"pid": *"[^"]*"' | head -1 | sed 's/.*"pid": *"//;s/"//g')
-    kbnstack_pid=$(grep -o '"kbnstack".*"pid": *"[^"]*"' "$STATUS_FILE" 2>/dev/null | grep -o '"pid": *"[^"]*"' | head -1 | sed 's/.*"pid": *"//;s/"//g')
+    essls_pid=$(grep -o '"essls".*"pid": *"[^"]*"' "$STATUS_FILE" 2>/dev/null | grep -o '"pid": *"[^"]*"' | head -1 | sed 's/.*"pid": *"//;s/"//g') || true
+    esstack_pid=$(grep -o '"esstack".*"pid": *"[^"]*"' "$STATUS_FILE" 2>/dev/null | grep -o '"pid": *"[^"]*"' | head -1 | sed 's/.*"pid": *"//;s/"//g') || true
+    optimizer_pid=$(grep -o '"optimizer".*"pid": *"[^"]*"' "$STATUS_FILE" 2>/dev/null | grep -o '"pid": *"[^"]*"' | head -1 | sed 's/.*"pid": *"//;s/"//g') || true
+    kbnsls_pid=$(grep -o '"kbnsls".*"pid": *"[^"]*"' "$STATUS_FILE" 2>/dev/null | grep -o '"pid": *"[^"]*"' | head -1 | sed 's/.*"pid": *"//;s/"//g') || true
+    kbnstack_pid=$(grep -o '"kbnstack".*"pid": *"[^"]*"' "$STATUS_FILE" 2>/dev/null | grep -o '"pid": *"[^"]*"' | head -1 | sed 's/.*"pid": *"//;s/"//g') || true
   fi
 
   local essls_alive=false esstack_alive=false optimizer_alive=false

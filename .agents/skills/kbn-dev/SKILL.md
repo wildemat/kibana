@@ -13,6 +13,8 @@ description: >
   "start es and kibana", "spin up kibana", "kibana dev", "restart kibana",
   "check kibana", "kibana logs", "es logs", or "kibana status".
 allowed-tools: >
+  Bash(source * && yarn kbn-dev-ctl *)
+  Bash(source * && yarn kbn-dev *)
   Bash(yarn kbn-dev-ctl *)
   Bash(yarn kbn-dev *)
   Bash(curl *)
@@ -41,12 +43,28 @@ kbn-dev (orchestrator, long-running)
 
 `yarn kbn-dev` is the startup orchestrator. `yarn kbn-dev-ctl` is the control plane.
 
+## IMPORTANT: nvm required before yarn commands
+
+Agent shells don't load nvm, so the system node version won't match kibana's
+`.nvmrc`. Yarn's engine check rejects commands before the script even runs.
+**Always source nvm before any yarn command:**
+
+```bash
+source "${NVM_DIR:-$HOME/.nvm}/nvm.sh" --no-use && nvm use --silent && yarn kbn-dev-ctl ...
+```
+
+Shorthand used throughout this skill: `nvm_use` = `source "${NVM_DIR:-$HOME/.nvm}/nvm.sh" --no-use && nvm use --silent`
+
+Every `yarn` invocation below MUST be prefixed with this. If you run a
+bare `yarn kbn-dev-ctl` without sourcing nvm first, it will fail with
+"The engine node is incompatible".
+
 ## Current status
 
 Check status before taking any action:
 
 ```
-!`yarn kbn-dev-ctl status --json 2>/dev/null || echo '{"running": false, "state": "not_running"}'`
+!`source "${NVM_DIR:-$HOME/.nvm}/nvm.sh" --no-use 2>/dev/null && nvm use --silent 2>/dev/null; yarn kbn-dev-ctl status --json 2>/dev/null || echo '{"running": false, "state": "not_running"}'`
 ```
 
 ## UX guidelines — be concise
@@ -78,6 +96,7 @@ cycle. Follow this pattern:
 2. Run `yarn kbn-dev --quiet` in the background (it checks if already running).
 3. Poll silently with a **simple sleep loop** — do NOT show output:
    ```bash
+   source "${NVM_DIR:-$HOME/.nvm}/nvm.sh" --no-use && nvm use --silent
    for i in $(seq 1 40); do
      sleep 15
      kbn_state=$(yarn kbn-dev-ctl status --json 2>/dev/null)
@@ -118,6 +137,9 @@ finishes, tell the user:
 one message when ready (or failed).
 
 ## Commands
+
+All commands must be prefixed with nvm sourcing (see above). Source nvm
+once at the start of a shell session, then run yarn commands normally.
 
 | Action | Command |
 |--------|---------|
@@ -206,15 +228,41 @@ working, or to check/test UI behavior:
 Do NOT search the codebase for UI questions that can be answered by
 looking at or curling the running app.
 
-- **Serverless** (port 5601): navigate to `http://localhost:5601`.
-  If a login/role selection screen appears, select the **admin** role.
-  The dev serverless setup uses mock authentication — no password needed,
-  just pick the role from the selector.
-- **Stateful** (port 5611): navigate to `http://localhost:5611`.
-  If a login screen appears, enter username `elastic` and password
-  `changeme`. Always use these credentials for stateful.
+### Handling login screens
 
-Common Kibana app paths:
+When you navigate to a Kibana instance and see a login/auth screen
+instead of the expected page, handle it automatically:
+
+**Serverless (port 5601) — Role selector:**
+The dev serverless instance uses mock authentication. Instead of a
+username/password form, you'll see a **role selection page** with
+profile cards for different roles (e.g. `admin`, `editor`, `viewer`,
+`t1_analyst`, `t2_analyst`, etc.).
+- Look for a card/button labeled **"admin"** (or containing "admin"
+  in the role name) and click it.
+- Default to `admin` unless the user specifically requests a different
+  role.
+- After selecting a role, you'll be redirected to the Kibana app. If
+  you land on a space selector, pick **Default** space.
+- There is no password. Just select the role.
+
+**Stateful (port 5611) — Login form:**
+The stateful instance uses a standard login form.
+- Find the **username** input field and type: `elastic`
+- Find the **password** input field and type: `changeme`
+- Click the **"Log in"** button.
+- If you see an "Enter code" or enrollment screen instead, the ES
+  cluster may not be configured correctly — report this to the user.
+
+**Detecting auth screens:**
+- If the URL contains `/login` or the page shows "Log in to Elastic"
+  or a role selector grid, you're on an auth page.
+- If you see a 401 or "Unauthorized" response, the session expired —
+  repeat the login flow.
+- After successful auth, navigate to the originally requested URL.
+
+### Common Kibana app paths
+
 - Getting started / onboarding: `/app/elasticsearch/start`
 - Search / indices: `/app/enterprise_search/elasticsearch`
 - Dev Tools console: `/app/dev_tools#/console`

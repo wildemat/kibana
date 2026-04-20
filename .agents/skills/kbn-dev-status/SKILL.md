@@ -5,16 +5,18 @@ description: >
   Use when the user types /kbn-dev-status or asks "is kibana running",
   "kibana status", "what's the state of kbn".
 disable-model-invocation: true
-allowed-tools: Bash(yarn kbn-dev-ctl *)
+allowed-tools: >
+  Bash(source * && yarn kbn-dev-ctl *)
+  Bash(yarn kbn-dev-ctl *)
 ---
 
 # Kibana Status
 
-Run `yarn kbn-dev-ctl status --json` from the kibana repo root and present a
+Source nvm first, then run `yarn kbn-dev-ctl status --json` and present a
 concise summary. Do NOT show raw JSON.
 
 ```
-!`yarn kbn-dev-ctl status --json 2>/dev/null || echo '{"running": false}'`
+!`source "${NVM_DIR:-$HOME/.nvm}/nvm.sh" --no-use 2>/dev/null && nvm use --silent 2>/dev/null; yarn kbn-dev-ctl status --json 2>/dev/null || echo '{"running": false}'`
 ```
 
 Format the output as:

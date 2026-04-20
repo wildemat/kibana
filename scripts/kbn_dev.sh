@@ -650,12 +650,24 @@ log_step "Starting ES Serverless..." "$ESSLS_LOG"
   attempt=0
   while [ $attempt -lt $max_attempts ]; do
     attempt=$((attempt + 1))
-    # shellcheck disable=SC2086
-    yarn es serverless \
-      --projectType elasticsearch_general_purpose \
-      --clean --kill \
-      $INFERENCE_FLAG \
-    && break
+    if [ $attempt -eq 1 ]; then
+      # First attempt: clean start
+      # shellcheck disable=SC2086
+      yarn es serverless \
+        --projectType elasticsearch_general_purpose \
+        --clean --kill \
+        $INFERENCE_FLAG \
+      && break
+    else
+      # Retries: don't use --clean --kill so cosmosdb (which may already
+      # be healthy) stays up. Only remove the crashed uiam container.
+      docker rm -f uiam 2>/dev/null || true
+      # shellcheck disable=SC2086
+      yarn es serverless \
+        --projectType elasticsearch_general_purpose \
+        $INFERENCE_FLAG \
+      && break
+    fi
     echo ""
     echo "[$(date '+%Y-%m-%d %H:%M:%S')] ES Serverless attempt $attempt/$max_attempts failed (uiam may need more time). Retrying..."
     echo ""

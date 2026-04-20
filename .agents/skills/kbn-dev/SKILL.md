@@ -67,7 +67,9 @@ state. The key fields are `"running"` (is the orchestrator PID alive) and
 - **`"running": false`**: Start it (steps 1-5 below).
 
 If the user says "restart kibana", use `yarn kbn-dev-ctl restart all`.
-Restart always does a full stop + start (ES + Kibana together).
+Restart does a full stop + start (ES + Kibana together). It backgrounds
+the new kbn process and returns immediately. **After a restart, always
+poll for readiness using the same loop as step 3 below.**
 
 **Starting Kibana is a background task.** Don't show the user every poll
 cycle. Follow this pattern:

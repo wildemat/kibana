@@ -576,16 +576,9 @@ echo "============================================="
 if [ "$SHOW_LOGS" = true ]; then
   open_tmux_logs
   echo ""
-  echo "  tmux session 'kbn-logs' opened. Run 'yarn kbn-dev-ctl attach' to open it."
-  if command -v pbcopy >/dev/null 2>&1; then
-    echo "tmux attach -t kbn-logs" | pbcopy
-    echo "  Copied to clipboard: tmux attach -t kbn-logs  (⌘V in a new tab)"
-  elif command -v xclip >/dev/null 2>&1; then
-    echo "tmux attach -t kbn-logs" | xclip -selection clipboard
-    echo "  Copied to clipboard: tmux attach -t kbn-logs"
-  else
-    echo "  Attach with: tmux attach -t kbn-logs"
-  fi
+  echo "  tmux session 'kbn-logs' opened. Attach in another terminal:"
+  echo ""
+  echo "    tmux attach -t kbn-logs"
   echo ""
 fi
 

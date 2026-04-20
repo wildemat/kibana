@@ -674,26 +674,22 @@ log_step "Starting ES Serverless..." "$ESSLS_LOG"
   yarn es serverless \
     --projectType elasticsearch_general_purpose \
     --clean --kill \
-    $INFERENCE_FLAG &
-  ES_SLS_PID=$!
+    $INFERENCE_FLAG
+  es_exit=$?
 
-  # Wait for cosmosdb to become healthy, then let yarn es continue
-  sleep 5
-  wait_for_cosmosdb
-
-  # If uiam crashed because cosmosdb wasn't ready, restart just uiam
-  if ! docker inspect -f '{{.State.Running}}' uiam 2>/dev/null | grep -q true; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] uiam is not running — restarting it"
+  # If the first attempt failed (uiam crashed because cosmosdb wasn't ready),
+  # cosmosdb and ES nodes may still be running. Wait for cosmosdb to be
+  # healthy, remove just the crashed uiam, and retry without --clean --kill
+  # so the healthy containers are preserved.
+  if [ $es_exit -ne 0 ]; then
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ES Serverless failed (exit $es_exit). Checking cosmosdb..."
+    wait_for_cosmosdb
     docker rm -f uiam 2>/dev/null || true
-    # Trigger yarn es to restart uiam by killing and re-running
-    kill $ES_SLS_PID 2>/dev/null || true
-    wait $ES_SLS_PID 2>/dev/null || true
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Retrying ES Serverless (preserving healthy containers)..."
     # shellcheck disable=SC2086
     yarn es serverless \
       --projectType elasticsearch_general_purpose \
       $INFERENCE_FLAG
-  else
-    wait $ES_SLS_PID
   fi
 ) >> "$ESSLS_LOG" 2>&1 &
 ESSLS_PID=$!

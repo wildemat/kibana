@@ -103,10 +103,12 @@ cmd_status() {
   if [ "$esstack_alive" = true ] || [ "$p9201" = true ]; then
     check_ready "$LOG_DIR/esstack.log" "succ ES cluster is ready" && esstack_ready=true
   fi
-  if [ "$kbnsls_alive" = true ] || [ "$p5601" = true ]; then
+  # Kibana ready = log says available AND port is actually open.
+  # The log check alone is unreliable after restarts (stale messages).
+  if [ "$p5601" = true ]; then
     check_ready "$LOG_DIR/kbnsls.log" "\[INFO \]\[status\] Kibana is now available" && kbnsls_ready=true
   fi
-  if [ "$kbnstack_alive" = true ] || [ "$p5611" = true ]; then
+  if [ "$p5611" = true ]; then
     check_ready "$LOG_DIR/kbnstack.log" "\[INFO \]\[status\] Kibana is now available" && kbnstack_ready=true
   fi
 

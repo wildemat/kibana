@@ -231,14 +231,19 @@ cmd_restart() {
 
   echo "Restarting $comp..."
 
-  # Kill the Kibana process on its port
+  # Kill the Kibana process listening on its port
   local kbn_port_pid
-  kbn_port_pid=$(lsof -ti "tcp:$port" 2>/dev/null)
+  kbn_port_pid=$(lsof -nP -iTCP:"$port" -sTCP:LISTEN -t 2>/dev/null | head -1)
   if [ -n "$kbn_port_pid" ]; then
-    echo "  Killing process $kbn_port_pid on port $port"
+    echo "  Killing PID $kbn_port_pid on port $port"
     kill "$kbn_port_pid" 2>/dev/null || true
     sleep 2
-    kill -0 "$kbn_port_pid" 2>/dev/null && kill -9 "$kbn_port_pid" 2>/dev/null || true
+    if kill -0 "$kbn_port_pid" 2>/dev/null; then
+      echo "  Force-killing PID $kbn_port_pid"
+      kill -9 "$kbn_port_pid" 2>/dev/null || true
+    fi
+  else
+    echo "  No process listening on port $port"
   fi
 
   echo "  The monitor_process loop in kbn-dev will auto-restart $comp."

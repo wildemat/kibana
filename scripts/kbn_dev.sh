@@ -879,8 +879,16 @@ fi
 
 if [ "$SLS_READY" = false ] || [ "$STACK_READY" = false ]; then
   echo ""
-  [ "$SLS_READY" = false ]  && echo "  WARNING: Kibana Serverless failed to start. Check: yarn kbn-dev-ctl logs essls --grep ERROR"
-  [ "$STACK_READY" = false ] && echo "  WARNING: Kibana Stateful failed to start. Check: yarn kbn-dev-ctl logs esstack --grep ERROR"
+  if [ "$SLS_READY" = false ]; then
+    echo "  WARNING: Kibana Serverless failed to start."
+    echo "    Check: yarn kbn-dev-ctl logs essls --grep ERROR"
+    echo "    Common fix: the uiam Docker container needs more time/memory."
+    echo "    Try increasing Docker memory to 24GB+ in OrbStack/Docker Desktop settings."
+  fi
+  if [ "$STACK_READY" = false ]; then
+    echo "  WARNING: Kibana Stateful failed to start."
+    echo "    Check: yarn kbn-dev-ctl logs esstack --grep ERROR"
+  fi
   echo "  Continuing with available instance(s)."
   echo ""
 fi

@@ -102,28 +102,13 @@ cycle. Follow this pattern:
 
 ### Auto-recover Serverless when Stateful is up
 
-If Stateful comes up but Serverless fails (usually uiam container timeout),
-automatically retry without user intervention:
+If Stateful comes up but Serverless fails, `kbn-dev` retries serverless
+automatically (up to 3 attempts). If it still fails after the script
+finishes, tell the user:
 
-1. Tell the user: "Stateful is ready at :5611. Serverless failed — retrying..."
-2. Clean up stale serverless containers:
-   ```bash
-   docker rm -f $(docker ps -aq --filter "name=es01" --filter "name=es02" --filter "name=es03" --filter "name=uiam" --filter "name=uiam-cosmosdb") 2>/dev/null
-   ```
-3. Restart the serverless ES cluster from the kibana repo:
-   ```bash
-   yarn es serverless --projectType elasticsearch_general_purpose --clean --kill &
-   ```
-4. Poll `yarn kbn-dev-ctl status --json` for `essls.ready` becoming true (up to 5 min).
-5. Once ES Serverless is ready, start Kibana Serverless:
-   ```bash
-   KBN_OPTIMIZER_USE_MAX_AVAILABLE_RESOURCES=false yarn serverless-es --server.port=5601 --no-optimizer &
-   ```
-6. Poll for `kbnsls.ready` or HTTP 200 on port 5601 (up to 2 min).
-7. Report result: "Serverless is now ready at :5601" or "Serverless
-   recovery failed — uiam may be broken. Try `yarn kbn-dev --quiet --clean`."
-
-Retry this recovery once. If it fails twice, stop and inform the user.
+> "Stateful is ready at :5611. Serverless failed to start — this is
+> usually a Docker state issue. Try `yarn kbn-dev-ctl stop` then
+> `yarn kbn-dev --clean` for a fully clean start."
 
 **Never** show raw JSON status output unless the user explicitly asks.
 **Never** show intermediate polling results. One message at the start,

@@ -39,14 +39,17 @@ yarn kbn-dev-ctl logs essls --grep "error"   # check specific error
 **Symptom:** Log shows `Waiting for "uiam" container (unhealthy)` then
 `The "uiam" container failed to start within the expected time`.
 
-**Cause:** Stale Docker containers from a previous failed serverless run.
-`kbn-dev` cleans these automatically on startup, but if you hit this mid-session:
+**Cause:** Stale Docker network or containers from a previous run. The
+`elastic` Docker network accumulates stale DNS entries from crashed
+containers, causing uiam to fail resolving cosmosdb. `kbn-dev` cleans
+containers and the network automatically on startup, and retries up to
+3 times.
 
-**Fix:**
+**Fix if it persists:**
 ```bash
-docker rm -f $(docker ps -aq --filter "ancestor=docker.elastic.co/kibana-ci/uiam:latest-verified") 2>/dev/null
-docker rm -f $(docker ps -aq --filter "ancestor=docker.elastic.co/kibana-ci/elasticsearch-serverless:latest-verified") 2>/dev/null
-docker rm -f $(docker ps -aq --filter "ancestor=docker.elastic.co/kibana-ci/uiam-azure-cosmos-emulator:latest-verified") 2>/dev/null
+yarn kbn-dev-ctl stop
+docker system prune -a    # nuclear option: clears all Docker state
+yarn kbn-dev
 ```
 
 ### Bootstrap fails

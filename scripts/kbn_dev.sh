@@ -644,9 +644,8 @@ log_step "Starting ES Serverless..." "$ESSLS_LOG"
 (
   cd "$KBN_DIR" || exit 1
 
-  # uiam can crash if cosmosdb isn't ready yet (upstream bug: zero retries
-  # in the Cosmos DB client). Retry up to 3 times — each attempt is a
-  # full clean start via yarn es serverless.
+  # Retry up to 3 times in case of uiam/cosmosdb startup race.
+  # The Docker network cleanup before this step usually prevents the issue.
   max_attempts=3
   attempt=0
   while [ $attempt -lt $max_attempts ]; do

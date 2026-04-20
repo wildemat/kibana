@@ -52,15 +52,19 @@ Check status before taking any action:
 ## UX guidelines — be concise
 
 **Check status first.** The dynamic injection above gives you the current
-state. Handle each case:
+state. The key fields are `"running"` (is the orchestrator PID alive) and
+`"state"` (what phase it's in). Handle each case:
 
-- **Already running, both ready**: Tell the user "Kibana is already running"
-  and show the URLs. Do NOT restart unless the user explicitly asks.
-- **Already running, partially ready**: Report what's up and what's down.
-  Offer to restart the failed component.
-- **Running but not ready yet**: A previous session started kbn-dev and it's
-  still booting. Poll for readiness (step 3 below) instead of restarting.
-- **Not running**: Start it (steps 1-5 below).
+- **`"running": true`, both kbnsls and kbnstack show `"ready": true`**:
+  Tell the user "Kibana is already running" and show the URLs. Do NOT
+  restart unless the user explicitly asks.
+- **`"running": true`, state is `"starting"` / `"es_starting"` / `"optimizer_ready"`**:
+  Kibana is already starting up (from this or a previous session). Tell
+  the user "Kibana is currently starting up (state: X). I'll monitor it."
+  Then poll for readiness (step 3 below). Do NOT start a second instance.
+- **`"running": true`, partially ready (one up, one down)**:
+  Report what's up and what's down. Offer to restart the failed component.
+- **`"running": false`**: Start it (steps 1-5 below).
 
 If the user says "restart kibana", use `yarn kbn-dev-ctl stop` then start fresh.
 

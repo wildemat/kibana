@@ -612,6 +612,10 @@ if command -v docker >/dev/null 2>&1; then
     docker rmi $dangling 2>/dev/null || true
   fi
 
+  # Remove stale 'elastic' Docker network — stale DNS entries from crashed
+  # containers can cause uiam to fail resolving uiam-cosmosdb.
+  docker network rm elastic 2>/dev/null || true
+
   if [ "$CLEAN_CACHE" = true ]; then
     echo "  --clean: removing all kibana-ci images (will re-pull)..."
     # shellcheck disable=SC2046

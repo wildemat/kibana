@@ -640,50 +640,26 @@ log_step "Starting ES Serverless..." "$ESSLS_LOG"
 (
   cd "$KBN_DIR" || exit 1
 
-  # Pre-warm: if cosmosdb is already running and healthy, skip the wait.
-  # Otherwise, yarn es serverless will start it, and we wait for it to be
-  # healthy before uiam tries to connect (uiam has zero retries and crashes
-  # if cosmosdb isn't ready).
-  wait_for_cosmosdb() {
-    local cosmosdb_status
-    cosmosdb_status=$(docker inspect -f '{{.State.Health.Status}}' uiam-cosmosdb 2>/dev/null || echo "missing")
-    if [ "$cosmosdb_status" = "healthy" ]; then
-      echo "[$(date '+%Y-%m-%d %H:%M:%S')] cosmosdb already healthy"
-      return 0
-    fi
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Waiting for cosmosdb to become healthy..."
-    local tries=0
-    while [ $tries -lt 60 ]; do
-      cosmosdb_status=$(docker inspect -f '{{.State.Health.Status}}' uiam-cosmosdb 2>/dev/null || echo "missing")
-      [ "$cosmosdb_status" = "healthy" ] && echo "[$(date '+%Y-%m-%d %H:%M:%S')] cosmosdb is healthy" && return 0
-      tries=$((tries + 1))
-      sleep 2
-    done
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] cosmosdb did not become healthy in time"
-    return 1
-  }
+  # uiam crashes if cosmosdb isn't ready (zero retries in the Cosmos DB
+  # client). yarn es serverless's cleanup kills all containers on failure.
+  # Simple retry: Docker images are cached after attempt 1, so cosmosdb
+  # starts faster on subsequent attempts, closing the race window.
+  max_attempts=3
+  attempt=0
+  while [ $attempt -lt $max_attempts ]; do
+    attempt=$((attempt + 1))
+    [ $attempt -gt 1 ] && echo "[$(date '+%Y-%m-%d %H:%M:%S')] ES Serverless attempt $attempt/$max_attempts (Docker images cached, cosmosdb starts faster)..."
 
-  # shellcheck disable=SC2086
-  yarn es serverless \
-    --projectType elasticsearch_general_purpose \
-    --clean --kill \
-    $INFERENCE_FLAG
-  es_exit=$?
-
-  # If the first attempt failed (uiam crashed because cosmosdb wasn't ready),
-  # cosmosdb and ES nodes may still be running. Wait for cosmosdb to be
-  # healthy, remove just the crashed uiam, and retry without --clean --kill
-  # so the healthy containers are preserved.
-  if [ $es_exit -ne 0 ]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ES Serverless failed (exit $es_exit). Checking cosmosdb..."
-    wait_for_cosmosdb
-    docker rm -f uiam 2>/dev/null || true
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Retrying ES Serverless (preserving healthy containers)..."
     # shellcheck disable=SC2086
     yarn es serverless \
       --projectType elasticsearch_general_purpose \
-      $INFERENCE_FLAG
-  fi
+      --clean --kill \
+      $INFERENCE_FLAG \
+    && break
+
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] ES Serverless attempt $attempt/$max_attempts failed (uiam/cosmosdb race condition)."
+    sleep 3
+  done
 ) >> "$ESSLS_LOG" 2>&1 &
 ESSLS_PID=$!
 

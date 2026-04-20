@@ -247,12 +247,14 @@ cmd_restart() {
   fi
 
   echo ""
-  echo "  Starting kbn-dev..."
+  echo "  Starting kbn-dev in background..."
   if [ -f "scripts/kbn_dev.sh" ]; then
-    exec bash scripts/kbn_dev.sh --quiet
+    bash scripts/kbn_dev.sh --quiet &
   else
-    exec kbn --quiet
+    kbn --quiet &
   fi
+  echo "  PID: $!"
+  echo "  Use 'yarn kbn-dev-ctl status' to monitor."
 }
 
 # --- stop -------------------------------------------------------------------

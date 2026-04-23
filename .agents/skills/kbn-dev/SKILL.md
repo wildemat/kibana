@@ -1,17 +1,13 @@
 ---
 name: kbn-dev
 description: >
-  Start, stop, monitor, and interact with local Kibana dev instances
-  (serverless on :5601, stateful on :5611) and their Elasticsearch clusters.
-  Use `yarn kbn-dev` to start and `yarn kbn-dev-ctl` to control.
-  This replaces manually running yarn es + yarn start.
-  Use when the user asks about Kibana status, needs to start or restart
-  Kibana, is debugging startup failures, after code changes that require
-  a Kibana restart, or when working in the kibana repo and the dev
-  environment needs managing. Also use when the user says "start kibana",
-  "startup kibana", "kbn-dev", "run kibana", "kibana dev environment",
-  "start es and kibana", "spin up kibana", "kibana dev", "restart kibana",
-  "check kibana", "kibana logs", "es logs", or "kibana status".
+  Start, stop, restart, and manage local Kibana dev instances (serverless
+  on :5601, stateful on :5611). Use when the user wants to start kibana,
+  restart kibana, stop kibana, view logs, or debug startup failures.
+  Trigger words: "start kibana", "restart kibana", "stop kibana",
+  "kbn-dev", "spin up kibana", "kibana logs", "es logs".
+  For status-only queries ("is kibana running", "kibana status"), prefer
+  the /kbn-dev-status skill instead.
 allowed-tools: >
   Bash(source * && yarn kbn-dev-ctl *)
   Bash(source * && yarn kbn-dev *)
@@ -24,77 +20,52 @@ allowed-tools: >
   Bash(grep *)
 ---
 
-# Kibana Controller
+# Kibana Dev Environment
 
-Manage a local Kibana development environment running two Kibana instances
-(serverless + stateful) against two Elasticsearch clusters, with a shared
-optimizer in watch mode.
+Dual-mode Kibana dev launcher: serverless (:5601) + stateful (:5611).
 
-## Architecture
+`yarn kbn-dev` starts everything. `yarn kbn-dev-ctl` controls it.
 
-```
-kbn-dev (orchestrator, long-running)
-├── ES Serverless  (Docker, port 9200)
-├── ES Stateful    (Docker, port 9201)
-├── Optimizer      (watch mode, shared)
-├── Kibana SLS     (port 5601, serverless mode)
-└── Kibana Stack   (port 5611, stateful mode)
-```
+**All commands must run from the kibana repo root.** Verify before
+running: `grep -q '"name": "kibana"' package.json 2>/dev/null || echo "NOT in kibana root — cd there first"`
 
-`yarn kbn-dev` is the startup orchestrator. `yarn kbn-dev-ctl` is the control plane.
+## nvm — MUST prefix all yarn commands
 
-## IMPORTANT: nvm required before yarn commands
-
-Agent shells don't load nvm, so the system node version won't match kibana's
-`.nvmrc`. Yarn's engine check rejects commands before the script even runs.
-**Always source nvm before any yarn command:**
+Agent shells don't load nvm. Yarn rejects commands if node doesn't match
+`.nvmrc`. **Prefix every yarn call with:**
 
 ```bash
-source "${NVM_DIR:-$HOME/.nvm}/nvm.sh" --no-use && nvm use --silent && yarn kbn-dev-ctl ...
+source "${NVM_DIR:-$HOME/.nvm}/nvm.sh" --no-use && nvm use --silent && yarn ...
 ```
 
-Shorthand used throughout this skill: `nvm_use` = `source "${NVM_DIR:-$HOME/.nvm}/nvm.sh" --no-use && nvm use --silent`
-
-Every `yarn` invocation below MUST be prefixed with this. If you run a
-bare `yarn kbn-dev-ctl` without sourcing nvm first, it will fail with
-"The engine node is incompatible".
+Source nvm once per shell session, then run yarn commands normally.
 
 ## Current status
-
-Check status before taking any action:
 
 ```
 !`source "${NVM_DIR:-$HOME/.nvm}/nvm.sh" --no-use 2>/dev/null && nvm use --silent 2>/dev/null; yarn kbn-dev-ctl status --json 2>/dev/null || echo '{"running": false, "state": "not_running"}'`
 ```
 
-## UX guidelines — be concise
+## Commands
 
-**Check status first.** The dynamic injection above gives you the current
-state. The key fields are `"running"` (is the orchestrator PID alive) and
-`"state"` (what phase it's in). Handle each case:
+| Action | Command |
+|--------|---------|
+| Start | `yarn kbn-dev --quiet` |
+| Start clean | `yarn kbn-dev --quiet --clean` |
+| Status | `yarn kbn-dev-ctl status --json` |
+| Logs | `yarn kbn-dev-ctl logs <component> [--tail N] [--grep PAT]` |
+| Restart | `yarn kbn-dev-ctl restart <serverless\|stateful\|all>` |
+| Stop | `yarn kbn-dev-ctl stop` |
 
-- **`"running": true`, both kbnsls and kbnstack show `"ready": true`**:
-  Tell the user "Kibana is already running" and show the URLs. Do NOT
-  restart unless the user explicitly asks.
-- **`"running": true`, state is `"starting"` / `"es_starting"` / `"optimizer_ready"`**:
-  Kibana is already starting up (from this or a previous session). Tell
-  the user "Kibana is currently starting up (state: X). I'll monitor it."
-  Then poll for readiness (step 3 below). Do NOT start a second instance.
-- **`"running": true`, partially ready (one up, one down)**:
-  Report what's up and what's down. Offer to restart the failed component.
-- **`"running": false`**: Start it (steps 1-5 below).
+Components: `essls`, `esstack`, `optimizer`, `kbnsls`, `kbnstack`, `main`, `all`
 
-If the user says "restart kibana", use `yarn kbn-dev-ctl restart all`.
-Restart does a full stop + start (ES + Kibana together). It backgrounds
-the new kbn process and returns immediately. **After a restart, always
-poll for readiness using the same loop as step 3 below.**
+## Starting Kibana
 
-**Starting Kibana is a background task.** Don't show the user every poll
-cycle. Follow this pattern:
+Check status first. If already running, tell the user. If not:
 
-1. Tell the user: "Spinning up serverless and stateful Kibana, standby... (run /kbn-dev-status to check anytime)"
-2. Run `yarn kbn-dev --quiet` in the background (it checks if already running).
-3. Poll silently with a **simple sleep loop** — do NOT show output:
+1. Say: "Spinning up Kibana, standby... (run /kbn-dev-status to check)"
+2. Run `yarn kbn-dev --quiet` in background.
+3. Poll silently:
    ```bash
    source "${NVM_DIR:-$HOME/.nvm}/nvm.sh" --no-use && nvm use --silent
    for i in $(seq 1 40); do
@@ -107,197 +78,47 @@ cycle. Follow this pattern:
      if [ "$is_running" = "0" ] && [ $i -gt 2 ]; then break; fi
    done
    ```
-   Important: check `"running": true` — if the orchestrator died (`false`)
-   after a few polls, stop waiting and report the failure.
-   The `state` field goes: `starting` → `es_starting` → `optimizer_ready`
-   → `running`. There is NO `"ready"` state.
-4. Check what came up and tell the user:
-   - Both ready: "Kibana is ready! Serverless: :5601, Stateful: :5611"
-   - Neither ready: "Startup failed. Run `yarn kbn-dev-ctl logs essls --grep ERROR`
-     to see what went wrong."
-   - **Stateful up, Serverless failed**: Tell the user Stateful is ready,
-     then automatically attempt to recover Serverless (see below).
-5. If the `kbn-dev` background process exited early (exit code 0), check
-   `yarn kbn-dev-ctl status --json` — if `"state": "stopped"` or `"state": "failed"`,
-   the orchestrator tore itself down. Check `yarn kbn-dev-ctl logs main --tail 20`
-   for the cause.
+4. Report: both ready → URLs. Neither → "check logs". One failed → offer restart.
 
-### Auto-recover Serverless when Stateful is up
+State progression: `starting` → `es_starting` → `optimizer_ready` → `running`.
 
-If Stateful comes up but Serverless fails, `kbn-dev` retries serverless
-automatically (up to 3 attempts). If it still fails after the script
-finishes, tell the user:
+**Never** show raw JSON or intermediate polls. One message at start, one when done.
 
-> "Stateful is ready at :5611. Serverless failed to start — this is
-> usually a Docker state issue. Try `yarn kbn-dev-ctl stop` then
-> `yarn kbn-dev --clean` for a fully clean start."
+## Viewing logs
 
-**Never** show raw JSON status output unless the user explicitly asks.
-**Never** show intermediate polling results. One message at the start,
-one message when ready (or failed).
+**"Open the logs":** Requires interactive terminal. Tell the user:
+> Run `yarn kbn-dev-ctl attach` in your terminal.
 
-## Commands
-
-All commands must be prefixed with nvm sourcing (see above). Source nvm
-once at the start of a shell session, then run yarn commands normally.
-
-| Action | Command |
-|--------|---------|
-| Start | `yarn kbn-dev --quiet` |
-| Start clean | `yarn kbn-dev --quiet --clean` |
-| Start (no EIS) | `KBN_INFERENCE_URL="" yarn kbn-dev --quiet` |
-| Status (JSON) | `yarn kbn-dev-ctl status --json` |
-| Status (human) | `yarn kbn-dev-ctl status` |
-| Logs | `yarn kbn-dev-ctl logs <component> [--tail N] [--grep PATTERN]` |
-| Attach tmux | `yarn kbn-dev-ctl attach` |
-| Restart | `yarn kbn-dev-ctl restart <serverless\|stateful\|all>` |
-| Stop | `yarn kbn-dev-ctl stop` |
-
-Components: `essls`, `esstack`, `optimizer`, `kbnsls`, `kbnstack`, `main`, `all`
-
-### Viewing logs
-
-**"Open the logs" / "show me all logs":**
-The tmux log viewer requires an interactive terminal, so you can't attach
-to it directly. Tell the user to run it themselves:
-
-> Run `yarn kbn-dev-ctl attach` in your terminal to open the tmux log
-> viewer with all four panes (ES Serverless, ES Stateful, Kibana SLS,
-> Kibana Stack).
-
-**Showing logs inline (what you CAN do):**
-Use `yarn kbn-dev-ctl logs <component>` to show logs in the agent shell.
-This works for targeted requests like "show me serverless errors":
-
+**Inline logs (what you CAN do):**
 ```bash
-yarn kbn-dev-ctl logs kbnsls --tail 50              # last 50 lines
-yarn kbn-dev-ctl logs all --grep "ERROR|FATAL"       # errors across all
-yarn kbn-dev-ctl logs essls --tail 20 --grep error   # ES serverless errors
+yarn kbn-dev-ctl logs kbnsls --tail 50
+yarn kbn-dev-ctl logs all --grep "ERROR|FATAL"
 ```
 
-Do NOT try to open terminal tabs, run AppleScript, or `tail -f` manually.
+Do NOT open terminal tabs, run AppleScript, or `tail -f` manually.
 
-## When to restart
+## Failure quick-ref
 
-Check `yarn kbn-dev-ctl status --json` and restart if a component shows
-`"alive": false` — common after branch switches, plugin code changes,
-or config edits. Restart always does a full stop + start (ES + Kibana
-together), never just Kibana alone.
-
-```bash
-yarn kbn-dev-ctl restart serverless   # restart ES Serverless + Kibana SLS
-yarn kbn-dev-ctl restart stateful     # restart ES Stateful + Kibana Stack
-yarn kbn-dev-ctl restart all          # restart everything
-```
-
-## Instance details and authentication
-
-| Instance | URL | Login | ES port |
-|----------|-----|-------|---------|
-| Serverless | http://localhost:5601 | auto-login (dev mode) | 9200 |
-| Stateful | http://localhost:5611 | elastic / changeme | 9201 |
-
-### Curl with auth
-
-**Stateful** uses basic auth:
-```bash
-curl -s -u elastic:changeme http://localhost:5611/api/status
-curl -s -u elastic:changeme http://localhost:5611/app/elasticsearch/start
-curl -s -u elastic:changeme "http://localhost:5611/api/console/proxy?path=_cat/indices&method=GET"
-```
-
-**Serverless** in dev mode uses cookie-based auth. First get a session
-cookie, then use it:
-```bash
-# Get session cookie (serverless dev auto-creates a session)
-curl -s -c /tmp/kbn-sls-cookie -L http://localhost:5601/app/home
-# Use the cookie for subsequent requests
-curl -s -b /tmp/kbn-sls-cookie http://localhost:5601/api/status
-curl -s -b /tmp/kbn-sls-cookie http://localhost:5601/app/elasticsearch/start
-```
-
-**ES clusters directly:**
-```bash
-# Serverless ES (port 9200) — no auth in dev
-curl -s http://localhost:9200/_cat/indices?v
-# Stateful ES (port 9201) — basic auth
-curl -s -u elastic:changeme http://localhost:9201/_cat/indices?v
-```
-
-When the user asks "is X working" and you don't have browser tools,
-use curl to fetch the page and check for expected content, API status
-codes, or error messages.
-
-## Failure diagnosis
-
-See [failure-modes.md](failure-modes.md) for detailed patterns. Key fixes:
 - **Node mismatch**: `nvm install $(cat .nvmrc)`
 - **Port in use**: `yarn kbn-dev-ctl restart all`
 - **Docker not running**: start Docker
 - **After branch switch**: `yarn kbn-dev --quiet --clean`
 - **Vault failed**: `KBN_INFERENCE_URL="" yarn kbn-dev --quiet`
 
-## Browser interaction
+For detailed diagnosis, read [failure-modes.md](failure-modes.md).
 
-When the user asks about what's visible in Kibana, whether a feature is
-working, or to check/test UI behavior:
+## Auth & browser interaction
 
-1. **If browser tools are available** (e.g. `cursor-ide-browser` MCP),
-   use them to navigate and visually inspect the running instances.
-2. **If no browser tools**, use `curl` with the auth patterns above to
-   fetch pages and check for expected content or error codes.
+For login screens, curl auth examples, and browser automation guidance,
+read [browser-auth.md](browser-auth.md).
 
-Do NOT search the codebase for UI questions that can be answered by
-looking at or curling the running app.
-
-### Handling login screens
-
-When you navigate to a Kibana instance and see a login/auth screen
-instead of the expected page, handle it automatically:
-
-**Serverless (port 5601) — Role selector:**
-The dev serverless instance uses mock authentication. Instead of a
-username/password form, you'll see a **role selection page** with
-profile cards for different roles (e.g. `admin`, `editor`, `viewer`,
-`t1_analyst`, `t2_analyst`, etc.).
-- Look for a card/button labeled **"admin"** (or containing "admin"
-  in the role name) and click it.
-- Default to `admin` unless the user specifically requests a different
-  role.
-- After selecting a role, you'll be redirected to the Kibana app. If
-  you land on a space selector, pick **Default** space.
-- There is no password. Just select the role.
-
-**Stateful (port 5611) — Login form:**
-The stateful instance uses a standard login form.
-- Find the **username** input field and type: `elastic`
-- Find the **password** input field and type: `changeme`
-- Click the **"Log in"** button.
-- If you see an "Enter code" or enrollment screen instead, the ES
-  cluster may not be configured correctly — report this to the user.
-
-**Detecting auth screens:**
-- If the URL contains `/login` or the page shows "Log in to Elastic"
-  or a role selector grid, you're on an auth page.
-- If you see a 401 or "Unauthorized" response, the session expired —
-  repeat the login flow.
-- After successful auth, navigate to the originally requested URL.
-
-### Common Kibana app paths
-
-- Getting started / onboarding: `/app/elasticsearch/start`
-- Search / indices: `/app/enterprise_search/elasticsearch`
-- Dev Tools console: `/app/dev_tools#/console`
-- Discover: `/app/discover`
-- Stack Management: `/app/management`
-- Dashboards: `/app/dashboards`
-
-When the user says "is X working on serverless" or "check the Y page",
-use the browser to navigate there and verify visually.
+| Instance | URL | Login |
+|----------|-----|-------|
+| Serverless | http://localhost:5601 | select "admin" role (no password) |
+| Stateful | http://localhost:5611 | elastic / changeme |
 
 ## Proactive monitoring
 
 After editing `.ts`, `.tsx`, `.yml`, or config files, silently run
-`yarn kbn-dev-ctl status --json`. If a component is down, run
-`yarn kbn-dev-ctl restart serverless` (or `stateful`) and tell the user
-briefly: "Kibana SLS crashed, restarting..."
+`yarn kbn-dev-ctl status --json`. If a component is down, restart and
+tell the user briefly: "Kibana SLS crashed, restarting..."

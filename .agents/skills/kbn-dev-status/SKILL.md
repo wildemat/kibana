@@ -1,10 +1,11 @@
 ---
 name: kbn-dev-status
 description: >
-  Show the current status of the local Kibana dev environment.
-  Use when the user types /kbn-dev-status or asks "is kibana running",
-  "kibana status", "what's the state of kbn".
-disable-model-invocation: true
+  Quick status check for the local Kibana dev environment. Use when the
+  user asks "is kibana running", "kibana status", "what's the state of
+  kibana", "check kibana", "kbn status", "what's kibana doing", or types
+  /kbn-dev-status. This is the lightweight skill — for start/stop/restart
+  actions, use /kbn-dev instead.
 allowed-tools: >
   Bash(source * && yarn kbn-dev-ctl *)
   Bash(yarn kbn-dev-ctl *)
@@ -12,14 +13,13 @@ allowed-tools: >
 
 # Kibana Status
 
-Source nvm first, then run `yarn kbn-dev-ctl status --json` and present a
-concise summary. Do NOT show raw JSON.
+Source nvm, then present status. Do NOT show raw JSON.
 
 ```
 !`source "${NVM_DIR:-$HOME/.nvm}/nvm.sh" --no-use 2>/dev/null && nvm use --silent 2>/dev/null; yarn kbn-dev-ctl status --json 2>/dev/null || echo '{"running": false}'`
 ```
 
-Format the output as:
+Format as:
 
 | Component | Status | Ready |
 |-----------|--------|-------|
@@ -29,7 +29,7 @@ Format the output as:
 | Kibana SLS | up/down | yes/no |
 | Kibana Stack | up/down | yes/no |
 
-Add URLs for ready Kibana instances:
+Add URLs for ready instances:
 - Serverless: http://localhost:5601
 - Stateful: http://localhost:5611
 

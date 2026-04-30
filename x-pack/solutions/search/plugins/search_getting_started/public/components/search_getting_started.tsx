@@ -25,6 +25,7 @@ import { SearchGettingStartedPageTemplate } from '../layout/page_template';
 import { ConsoleTutorialsGroup } from './tutorials/console_tutorials_group';
 import { AgentInstallSection } from './agent_install/agent_install';
 import { SearchGettingStartedHeader } from './header';
+import { IndexVerificationStatus } from './index_verification_status';
 import { SampleDataPanelStyle } from './styles';
 
 export const SearchGettingStartedPage: React.FC = () => {
@@ -102,6 +103,9 @@ export const SearchGettingStartedPage: React.FC = () => {
             </EuiFlexGroup>
           </EuiPanel>
         </EuiPanel>
+      </EuiPageTemplate.Section>
+      <EuiPageTemplate.Section paddingSize="xl" grow={false}>
+        <IndexVerificationStatus />
       </EuiPageTemplate.Section>
       <EuiSpacer />
       <EuiPageTemplate.Section data-test-subj="gettingStartedConsoleTutorials" paddingSize="xl">

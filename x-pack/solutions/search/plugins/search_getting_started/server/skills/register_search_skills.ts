@@ -8,6 +8,7 @@
 import type { Logger } from '@kbn/core/server';
 import { skills } from '@kbn/search-agent';
 import type { SearchGettingStartedSetupDependencies } from '../types';
+import { indexVerificationSkill } from './index_verification_skill';
 
 export const registerSearchSkills = ({
   plugins,
@@ -30,4 +31,12 @@ export const registerSearchSkills = ({
     });
     logger.debug(`Successfully registered ${id} skill in agent-builder`);
   }
+
+  agentBuilder.skills.register({
+    ...indexVerificationSkill,
+    id: `search.${indexVerificationSkill.id}`,
+  });
+  logger.debug(
+    `Successfully registered search.${indexVerificationSkill.id} skill in agent-builder`
+  );
 };

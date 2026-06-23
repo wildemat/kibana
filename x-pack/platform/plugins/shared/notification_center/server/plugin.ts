@@ -19,6 +19,7 @@ import type {
   NotificationCenterSetupDependencies,
   NotificationCenterStartDependencies,
 } from './types';
+import { notificationDataStreamDefinition } from './data_stream/notification_data_stream';
 
 export class NotificationCenterPlugin
   implements
@@ -30,20 +31,28 @@ export class NotificationCenterPlugin
     >
 {
   private readonly logger: Logger;
+  private readonly config: NotificationCenterConfig;
 
   constructor(context: PluginInitializerContext<NotificationCenterConfig>) {
     this.logger = context.logger.get();
+    this.config = context.config.get();
   }
 
   public setup(
-    _core: CoreSetup<NotificationCenterStartDependencies, NotificationCenterPluginStart>
+    core: CoreSetup<NotificationCenterStartDependencies, NotificationCenterPluginStart>
   ): NotificationCenterPluginSetup {
-    // Gated by `xpack.notificationCenter.enabled` in kibana config
+    if (!this.config.enabled) {
+      this.logger.debug('Notification Center plugin is disabled');
+      return {};
+    }
+
     this.logger.debug('Setting up Notification Center plugin');
+    core.dataStreams.registerDataStream(notificationDataStreamDefinition);
+
     return {};
   }
 
-  public start(core: CoreStart): NotificationCenterPluginStart {
+  public start(_core: CoreStart): NotificationCenterPluginStart {
     return {};
   }
 

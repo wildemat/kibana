@@ -8,5 +8,11 @@
   "kbn_references": [
     "@kbn/core",
     "@kbn/config-schema",
+    "@kbn/data-streams",
+    "@kbn/es-mappings",
+    "@kbn/logging",
+    "@kbn/test",
+    "@kbn/tooling-log",
+    "@kbn/core-logging-server-mocks",
   ]
 }

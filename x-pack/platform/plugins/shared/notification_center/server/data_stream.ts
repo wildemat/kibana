@@ -16,6 +16,15 @@ export const NOTIFICATIONS_DATA_STREAM_NAME = '.kibana-notifications' as const;
  */
 export const NOTIFICATIONS_DATA_RETENTION = '180d' as const;
 
+export const NOTIFICATION_SEVERITY = {
+  info: 'info',
+  warn: 'warn',
+  err: 'err',
+  crit: 'crit',
+} as const;
+
+export type NotificationSeverity = (typeof NOTIFICATION_SEVERITY)[keyof typeof NOTIFICATION_SEVERITY];
+
 export const notificationsDataStreamMappings = {
   dynamic: 'strict',
   properties: {

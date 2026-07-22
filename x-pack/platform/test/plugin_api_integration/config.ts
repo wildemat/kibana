@@ -43,6 +43,10 @@ export default async function ({ readConfigFile }: FtrConfigProviderContext) {
         // the flag were left to the (toggleable) default the assertion would
         // flip-flop with it.
         '--xpack.cases.analyticsV2.enabled=true',
+        // Notification Center is default-off; enable it here so its
+        // `notification-center:cleanup` task registers and the
+        // `check_registered_task_types` guard stays deterministic.
+        '--xpack.notificationCenter.enabled=true',
         '--xpack.task_manager.monitored_aggregated_stats_refresh_rate=5000',
         '--xpack.task_manager.invalidate_api_key_task.removalDelay="1s"',
         `--xpack.stack_connectors.enableExperimental=${JSON.stringify([

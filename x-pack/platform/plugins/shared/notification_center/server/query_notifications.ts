@@ -28,24 +28,24 @@ export interface NotificationQueryParams {
   from?: string;
   /** ISO upper bound on `@timestamp`, inclusive. */
   to?: string;
-  /** 1-based page, defaults to 1. */
-  page?: number;
-  /** Page size, defaults to 20. */
-  perPage?: number;
 }
 
-export interface NotificationQueryResult {
-  items: Notification[];
-  /** Collapsed notifications matching all filters. */
-  total: number;
+/**
+ * One collapsed `notification_id`: the latest doc as the representative content,
+ * plus the timestamp of the earliest in-horizon doc in the group. Read-state
+ * anchors on `earliestTimestamp` so a producer re-pushing a persisting condition
+ * never un-reads a notification the user already dismissed; pagination and the
+ * per-user `isRead` annotation are applied by the caller, above this function.
+ */
+export interface NotificationGroup {
+  notification: Notification;
+  earliestTimestamp: string;
 }
 
 export interface NotificationQueryDeps {
   dataStreams: DataStreamsStart;
   logger: Logger;
 }
-
-const DEFAULT_PER_PAGE = 20;
 
 /** Severities grouped by TTL so the horizon filter emits one clause per window. */
 const ttlGroups = Object.entries(SEVERITY_TTL_DAYS).reduce<Map<number, Severity[]>>(
@@ -92,43 +92,47 @@ const buildFilters = (params: NotificationQueryParams): QueryDslQueryContainer[]
 };
 
 /**
- * Fetch the notification list: latest doc per `notification_id` (field collapse),
- * severity-TTL horizon, attribute and time-range filters, newest first.
+ * Fetch the collapsed notification list: latest doc per `notification_id` (field
+ * collapse), severity-TTL horizon, attribute and time-range filters, newest first.
+ * A single query also surfaces each group's earliest in-horizon doc via `inner_hits`
+ * so the caller can anchor read-state on it.
  *
  * Per-user read-state annotation (`isRead`, unread counts, read/unread filtering)
- * is a follow-up on top of this function; it joins user storage data ES cannot
- * see, which is why pagination is already applied in memory here.
+ * and pagination are applied on top of this function by the route, because they
+ * join user storage data Elasticsearch cannot see.
  */
 export const queryNotifications = async (
   deps: NotificationQueryDeps,
   params: NotificationQueryParams = {}
-): Promise<NotificationQueryResult> => {
+): Promise<NotificationGroup[]> => {
   const { dataStreams, logger } = deps;
 
   const client = await getNotificationDataStreamClient(dataStreams);
   const response = await client.search({
     query: { bool: { filter: buildFilters(params) } },
-    collapse: { field: 'notification_id' },
+    collapse: {
+      field: 'notification_id',
+      inner_hits: { name: 'earliest', size: 1, sort: [{ '@timestamp': 'asc' }] },
+    },
     sort: [{ '@timestamp': 'desc' }, { notification_id: 'asc' }],
     size: COLLAPSED_GROUP_LIMIT,
     track_total_hits: false,
   });
 
-  const notifications = response.hits.hits.flatMap((hit): Notification[] => {
+  return response.hits.hits.flatMap((hit): NotificationGroup[] => {
     const parsed = notificationReadSchema.safeParse(hit._source);
     if (!parsed.success) {
       logger.debug(`Dropping malformed notification doc ${hit._id}: ${parsed.error.message}`);
       return [];
     }
-    return [parsed.data];
+    const earliestSource = hit.inner_hits?.earliest?.hits?.hits?.[0]?._source as
+      | { '@timestamp'?: string }
+      | undefined;
+    return [
+      {
+        notification: parsed.data,
+        earliestTimestamp: earliestSource?.['@timestamp'] ?? parsed.data['@timestamp'],
+      },
+    ];
   });
-
-  const page = params.page ?? 1;
-  const perPage = params.perPage ?? DEFAULT_PER_PAGE;
-  const start = (page - 1) * perPage;
-
-  return {
-    items: notifications.slice(start, start + perPage),
-    total: notifications.length,
-  };
 };

@@ -20,10 +20,19 @@ const doc = (id: string, ts: string, overrides: Record<string, unknown> = {}) =>
   ...overrides,
 });
 
-const setup = (docs: Array<Record<string, unknown>> = []) => {
-  const search = jest.fn().mockResolvedValue({
-    hits: { hits: docs.map((source, i) => ({ _id: `doc-${i}`, _source: source })) },
-  });
+/** A collapse hit: `latest` is the representative doc, `earliest` the inner-hit anchor. */
+const hit = (latest: Record<string, unknown>, earliestTs?: string) => ({
+  _id: `doc-${latest.notification_id}`,
+  _source: latest,
+  inner_hits: {
+    earliest: {
+      hits: { hits: [{ _source: { '@timestamp': earliestTs ?? latest['@timestamp'] } }] },
+    },
+  },
+});
+
+const setup = (hits: Array<ReturnType<typeof hit>> = []) => {
+  const search = jest.fn().mockResolvedValue({ hits: { hits } });
   const dataStreams = dataStreamServiceMock.createStartContract();
   dataStreams.initializeClient.mockResolvedValue({ search } as never);
 
@@ -32,14 +41,17 @@ const setup = (docs: Array<Record<string, unknown>> = []) => {
 };
 
 describe('queryNotifications', () => {
-  it('collapses on notification_id sorted by latest, capped at the group limit', async () => {
+  it('collapses on notification_id, anchoring the earliest doc via inner_hits, capped at the group limit', async () => {
     const { deps, search } = setup();
 
     await queryNotifications(deps);
 
     expect(search).toHaveBeenCalledWith(
       expect.objectContaining({
-        collapse: { field: 'notification_id' },
+        collapse: {
+          field: 'notification_id',
+          inner_hits: { name: 'earliest', size: 1, sort: [{ '@timestamp': 'asc' }] },
+        },
         sort: [{ '@timestamp': 'desc' }, { notification_id: 'asc' }],
         size: COLLAPSED_GROUP_LIMIT,
       })
@@ -120,33 +132,58 @@ describe('queryNotifications', () => {
     expect(query.bool.filter).toHaveLength(1);
   });
 
-  it('paginates the collapsed set', async () => {
-    const { deps } = setup(
-      ['a', 'b', 'c', 'd', 'e'].map((id, i) => doc(id, `2026-07-1${i}T00:00:00.000Z`))
-    );
+  it('returns every collapsed group as latest-doc content plus its earliest-doc anchor', async () => {
+    const { deps } = setup([
+      hit(doc('dup', '2026-07-12T00:00:00.000Z', { title: 'dup v2' }), '2026-07-09T00:00:00.000Z'),
+      hit(doc('solo', '2026-07-11T00:00:00.000Z')),
+    ]);
 
-    const result = await queryNotifications(deps, { page: 2, perPage: 2 });
+    const groups = await queryNotifications(deps);
 
-    expect(result.items.map(({ notification_id: id }) => id)).toEqual(['c', 'd']);
-    expect(result.total).toBe(5);
+    expect(groups).toEqual([
+      expect.objectContaining({
+        notification: expect.objectContaining({ notification_id: 'dup', title: 'dup v2' }),
+        earliestTimestamp: '2026-07-09T00:00:00.000Z',
+      }),
+      expect.objectContaining({
+        notification: expect.objectContaining({ notification_id: 'solo' }),
+        earliestTimestamp: '2026-07-11T00:00:00.000Z',
+      }),
+    ]);
+  });
+
+  it('falls back to the representative timestamp when no inner hit is present', async () => {
+    const { deps } = setup([
+      {
+        _id: 'doc-nohits',
+        _source: doc('nohits', '2026-07-15T00:00:00.000Z'),
+      } as ReturnType<typeof hit>,
+    ]);
+
+    const groups = await queryNotifications(deps);
+
+    expect(groups[0].earliestTimestamp).toBe('2026-07-15T00:00:00.000Z');
   });
 
   it('drops malformed docs instead of failing the response', async () => {
-    const { deps } = setup([doc('good', '2026-07-15T00:00:00.000Z'), { notification_id: 'bad' }]);
+    const { deps } = setup([
+      hit(doc('good', '2026-07-15T00:00:00.000Z')),
+      { _id: 'doc-bad', _source: { notification_id: 'bad' } } as ReturnType<typeof hit>,
+    ]);
 
-    const result = await queryNotifications(deps);
+    const groups = await queryNotifications(deps);
 
-    expect(result.items.map(({ notification_id: id }) => id)).toEqual(['good']);
+    expect(groups.map(({ notification }) => notification.notification_id)).toEqual(['good']);
     expect(deps.logger.debug).toHaveBeenCalledTimes(1);
   });
 
   it('normalizes an unknown severity tier to info on read', async () => {
     const { deps } = setup([
-      doc('future', '2026-07-15T00:00:00.000Z', { severity: 'catastrophic' }),
+      hit(doc('future', '2026-07-15T00:00:00.000Z', { severity: 'catastrophic' })),
     ]);
 
-    const result = await queryNotifications(deps);
+    const groups = await queryNotifications(deps);
 
-    expect(result.items[0].severity).toBe('info');
+    expect(groups[0].notification.severity).toBe('info');
   });
 });

@@ -81,44 +81,39 @@ describe('queryNotifications [integration]', () => {
     await esServer?.stop();
   });
 
-  it('returns each notification_id once, represented by its latest doc, newest first', async () => {
-    const { items, total } = await query();
+  const ids = (groups: Awaited<ReturnType<typeof query>>) =>
+    groups.map(({ notification }) => notification.notification_id);
 
-    expect(items.map(({ notification_id: id }) => id)).toEqual([
-      'recent-warning',
-      'dup',
-      'other-type',
-      'old-error',
-    ]);
-    expect(items.find(({ notification_id: id }) => id === 'dup')?.title).toBe('dup v2');
-    expect(total).toBe(4);
+  it('returns each notification_id once, represented by its latest doc, newest first', async () => {
+    const groups = await query();
+
+    expect(ids(groups)).toEqual(['recent-warning', 'dup', 'other-type', 'old-error']);
+    expect(groups.find(({ notification }) => notification.notification_id === 'dup')?.notification.title).toBe(
+      'dup v2'
+    );
+  });
+
+  it('anchors each group on its earliest in-horizon doc', async () => {
+    const groups = await query();
+
+    const dup = groups.find(({ notification }) => notification.notification_id === 'dup');
+    // The re-pushed id keeps its latest content but anchors on the first push (5d ago).
+    expect(dup?.notification.title).toBe('dup v2');
+    expect(new Date(dup!.earliestTimestamp).getTime()).toBeLessThan(
+      new Date(dup!.notification['@timestamp']).getTime()
+    );
   });
 
   it('excludes docs past their severity TTL while keeping longer-lived tiers of the same age', async () => {
-    const { items } = await query();
+    const groups = await query();
 
-    const ids = items.map(({ notification_id: id }) => id);
-    expect(ids).not.toContain('old-info');
-    expect(ids).toContain('old-error');
+    expect(ids(groups)).not.toContain('old-info');
+    expect(ids(groups)).toContain('old-error');
   });
 
   it('composes attribute filters', async () => {
-    const bySeverity = await query({ severity: ['error'] });
-    expect(bySeverity.items.map(({ notification_id: id }) => id)).toEqual(['old-error']);
-
-    const byType = await query({ type: 'other' });
-    expect(byType.items.map(({ notification_id: id }) => id)).toEqual(['other-type']);
-
-    const byNamespace = await query({ namespace: 'nonexistent' });
-    expect(byNamespace.items).toEqual([]);
-  });
-
-  it('paginates collapsed results', async () => {
-    const pageOne = await query({ page: 1, perPage: 2 });
-    const pageTwo = await query({ page: 2, perPage: 2 });
-
-    expect(pageOne.items.map(({ notification_id: id }) => id)).toEqual(['recent-warning', 'dup']);
-    expect(pageTwo.items.map(({ notification_id: id }) => id)).toEqual(['other-type', 'old-error']);
-    expect(pageOne.total).toBe(4);
+    expect(ids(await query({ severity: ['error'] }))).toEqual(['old-error']);
+    expect(ids(await query({ type: 'other' }))).toEqual(['other-type']);
+    expect(await query({ namespace: 'nonexistent' })).toEqual([]);
   });
 });

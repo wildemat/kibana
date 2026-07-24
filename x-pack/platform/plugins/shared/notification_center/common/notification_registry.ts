@@ -29,4 +29,26 @@ export const NOTIFICATION_REGISTRY = {
       },
     },
   },
+  reporting: {
+    display_name: 'Reporting',
+    description: 'Progress of report generation and export.',
+    types: {
+      exportReady: {
+        display_name: 'Export ready',
+        description: 'A report finished generating and is ready to download.',
+        kind: 'timeseries',
+      },
+    },
+  },
+  elasticsearch: {
+    display_name: 'Elasticsearch',
+    description: 'Cluster health and capacity conditions.',
+    types: {
+      diskWatermark: {
+        display_name: 'Disk watermark',
+        description: 'A data node crossed a disk usage watermark threshold.',
+        kind: 'state',
+      },
+    },
+  },
 } as const satisfies Record<string, NotificationNamespaceDefinition>;

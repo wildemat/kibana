@@ -13,6 +13,12 @@ export const configSchema = schema.object({
    * Controlled by `xpack.notificationCenter.enabled: <boolean>` in kibana.yml
    */
   enabled: schema.boolean({ defaultValue: false }),
+  /**
+   * Demo-only: run a background producer that periodically submits notifications so
+   * the live badge, collapse, and read-state behaviours are visible without manual
+   * seeding. Off by default; this is not shipped behaviour.
+   */
+  demoProducer: schema.boolean({ defaultValue: false }),
 });
 
 export type NotificationCenterConfig = TypeOf<typeof configSchema>;

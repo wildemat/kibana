@@ -16,6 +16,9 @@ import type { NotificationCenterConfig } from './config';
 import { registerNotificationDataStream } from './data_stream/notification_data_stream';
 import { buildForType } from './submit';
 import { registerNotificationUserStorage } from './user_storage';
+import { registerNotificationRoutes } from './routes';
+import { registerDemoRoutes } from './demo/routes';
+import { startDemoPoller } from './demo/poller';
 import type {
   NotificationCenterPluginSetup,
   NotificationCenterPluginStart,
@@ -33,9 +36,13 @@ export class NotificationCenterPlugin
     >
 {
   private readonly logger: Logger;
+  private readonly config: NotificationCenterConfig;
+  private forType?: NotificationCenterPluginSetup['forType'];
+  private stopDemoPoller?: () => void;
 
   constructor(context: PluginInitializerContext<NotificationCenterConfig>) {
     this.logger = context.logger.get();
+    this.config = context.config.get<NotificationCenterConfig>();
   }
 
   public setup(
@@ -46,15 +53,26 @@ export class NotificationCenterPlugin
 
     registerNotificationDataStream(core.dataStreams);
     registerNotificationUserStorage(core.userStorage);
+    registerNotificationRoutes(core, this.logger);
 
-    return {
-      forType: buildForType(core),
-    };
+    const forType = buildForType(core);
+    this.forType = forType;
+
+    if (this.config.demoProducer) {
+      registerDemoRoutes(core, forType, this.logger);
+    }
+
+    return { forType };
   }
 
-  public start(core: CoreStart): NotificationCenterPluginStart {
+  public start(_core: CoreStart): NotificationCenterPluginStart {
+    if (this.config.demoProducer && this.forType) {
+      this.stopDemoPoller = startDemoPoller(this.forType, this.logger);
+    }
     return {};
   }
 
-  public stop() {}
+  public stop() {
+    this.stopDemoPoller?.();
+  }
 }

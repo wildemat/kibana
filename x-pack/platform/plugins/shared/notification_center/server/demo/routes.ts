@@ -8,6 +8,7 @@
 import { schema } from '@kbn/config-schema';
 import { ReservedPrivilegesSet, type CoreSetup, type Logger } from '@kbn/core/server';
 import type { NotificationCenterPluginSetup } from '../types';
+import { NOTIFICATION_DATA_STREAM_NAME } from '../data_stream/notification_data_stream';
 import { seedDemoNotifications } from './seed';
 
 const INTERNAL_BASE = '/internal/notification_center';
@@ -40,6 +41,13 @@ export const registerDemoRoutes = (
     },
     async (_ctx, request, response) => {
       const summary = await seedDemoNotifications(forType, logger, request.query.invalid);
+      // Force the append-only stream visible immediately so a live seed is
+      // reflected in the very next list/count call, rather than after the ~1s
+      // ES refresh interval. Demo-only; the production submit path stays async.
+      const [{ elasticsearch }] = await core.getStartServices();
+      await elasticsearch.client.asInternalUser.indices.refresh({
+        index: NOTIFICATION_DATA_STREAM_NAME,
+      });
       return response.ok({ body: summary });
     }
   );

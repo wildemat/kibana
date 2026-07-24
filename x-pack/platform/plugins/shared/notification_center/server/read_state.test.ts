@@ -17,7 +17,11 @@ import {
 } from './read_state';
 import { READ_ALL_BEFORE_KEY, READ_KEY, READ_ALL_BEFORE_DEFAULT } from './user_storage';
 
-const group = (id: string, earliestTimestamp: string, latest = earliestTimestamp): NotificationGroup => ({
+const group = (
+  id: string,
+  earliestTimestamp: string,
+  latest = earliestTimestamp
+): NotificationGroup => ({
   earliestTimestamp,
   notification: {
     '@timestamp': latest,
@@ -30,17 +34,21 @@ const group = (id: string, earliestTimestamp: string, latest = earliestTimestamp
   } as Notification,
 });
 
-const makeClient = (values: Record<string, unknown>): jest.Mocked<IUserStorageClient> => ({
-  get: jest.fn((key: string) => Promise.resolve(values[key])),
-  set: jest.fn((key: string, value: unknown) => Promise.resolve(value)),
-  remove: jest.fn(() => Promise.resolve()),
-  getForInjection: jest.fn(() => Promise.resolve({})),
-});
+const makeClient = (values: Record<string, unknown>) => {
+  const set = jest.fn((_key: string, value: unknown) => Promise.resolve(value));
+  const client: IUserStorageClient = {
+    get: ((key: string) => Promise.resolve(values[key])) as IUserStorageClient['get'],
+    set: set as unknown as IUserStorageClient['set'],
+    remove: () => Promise.resolve(),
+    getForInjection: () => Promise.resolve({}),
+  };
+  return { client, set };
+};
 
 describe('read state', () => {
   describe('getReadState', () => {
     it('reads both keys from the scoped client', async () => {
-      const client = makeClient({
+      const { client } = makeClient({
         [READ_ALL_BEFORE_KEY]: '2026-07-10T00:00:00.000Z',
         [READ_KEY]: ['inference:modelStatus:a:eol'],
       });
@@ -64,9 +72,9 @@ describe('read state', () => {
     });
 
     it('is read when the id is in the individually-read list', () => {
-      expect(isRead(group('inference:modelStatus:marked:eol', '2026-07-20T00:00:00.000Z'), state)).toBe(
-        true
-      );
+      expect(
+        isRead(group('inference:modelStatus:marked:eol', '2026-07-20T00:00:00.000Z'), state)
+      ).toBe(true);
     });
 
     it('is unread when the earliest doc is newer than the marker and the id is not listed', () => {
@@ -90,7 +98,10 @@ describe('read state', () => {
     it('folds isRead onto each representative document', () => {
       const state: ReadState = { readAllBefore: '2026-07-10T00:00:00.000Z', read: [] };
       const annotated = annotateReadState(
-        [group('read-one', '2026-07-01T00:00:00.000Z'), group('unread-one', '2026-07-20T00:00:00.000Z')],
+        [
+          group('read-one', '2026-07-01T00:00:00.000Z'),
+          group('unread-one', '2026-07-20T00:00:00.000Z'),
+        ],
         state
       );
 
@@ -103,7 +114,7 @@ describe('read state', () => {
 
   describe('stampInitialReadAllBefore', () => {
     it('stamps the marker to now on the first load and returns the effective state', async () => {
-      const client = makeClient({});
+      const { client, set } = makeClient({});
       const before = Date.now();
 
       const state = await stampInitialReadAllBefore(client, {
@@ -111,16 +122,16 @@ describe('read state', () => {
         read: [],
       });
 
-      expect(client.set).toHaveBeenCalledWith(READ_ALL_BEFORE_KEY, expect.any(String));
+      expect(set).toHaveBeenCalledWith(READ_ALL_BEFORE_KEY, expect.any(String));
       expect(new Date(state.readAllBefore).getTime()).toBeGreaterThanOrEqual(before);
     });
 
     it('leaves an already-stamped marker untouched', async () => {
-      const client = makeClient({});
+      const { client, set } = makeClient({});
       const state: ReadState = { readAllBefore: '2026-07-10T00:00:00.000Z', read: [] };
 
       await expect(stampInitialReadAllBefore(client, state)).resolves.toEqual(state);
-      expect(client.set).not.toHaveBeenCalled();
+      expect(set).not.toHaveBeenCalled();
     });
   });
 });

@@ -31,7 +31,7 @@ const hit = (latest: Record<string, unknown>, earliestTs?: string) => ({
   },
 });
 
-const setup = (hits: Array<ReturnType<typeof hit>> = []) => {
+const setup = (hits: unknown[] = []) => {
   const search = jest.fn().mockResolvedValue({ hits: { hits } });
   const dataStreams = dataStreamServiceMock.createStartContract();
   dataStreams.initializeClient.mockResolvedValue({ search } as never);
@@ -157,7 +157,7 @@ describe('queryNotifications', () => {
       {
         _id: 'doc-nohits',
         _source: doc('nohits', '2026-07-15T00:00:00.000Z'),
-      } as ReturnType<typeof hit>,
+      },
     ]);
 
     const groups = await queryNotifications(deps);
@@ -168,7 +168,7 @@ describe('queryNotifications', () => {
   it('drops malformed docs instead of failing the response', async () => {
     const { deps } = setup([
       hit(doc('good', '2026-07-15T00:00:00.000Z')),
-      { _id: 'doc-bad', _source: { notification_id: 'bad' } } as ReturnType<typeof hit>,
+      { _id: 'doc-bad', _source: { notification_id: 'bad' } },
     ]);
 
     const groups = await queryNotifications(deps);

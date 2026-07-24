@@ -17,11 +17,9 @@ type ForType = NotificationCenterPluginSetup['forType'];
  * type: the real contract is compile-time-bound to registered refs, so the
  * rejection path can only be exercised behind a cast.
  */
-type LooseForType = (ref: {
-  namespace: string;
-  type: string;
-  kind: NotificationKind;
-}) => { submit: (input: Record<string, unknown>) => Promise<SubmitNotificationResult> };
+type LooseForType = (ref: { namespace: string; type: string; kind: NotificationKind }) => {
+  submit: (input: Record<string, unknown>) => Promise<SubmitNotificationResult>;
+};
 
 /**
  * A curated spread across every severity tier, both notification kinds, and all
@@ -37,13 +35,17 @@ const seedDemo = async (forType: ForType): Promise<SubmitNotificationResult[]> =
       title: 'ELSER v2 is deprecated',
       description: 'The .elser-2-elasticsearch model is deprecated. Migrate to a supported model.',
       severity: 'warning',
-      cta: { link: '/app/management/data/inference_endpoints', linkText: 'Review inference endpoints' },
+      cta: {
+        link: '/app/management/data/inference_endpoints',
+        linkText: 'Review inference endpoints',
+      },
     }),
     forType({ namespace: 'elasticsearch', type: 'diskWatermark', kind: 'state' }).submit({
       entity: 'data-node-7',
       state: 'high',
       title: 'Disk usage high on data-node-7',
-      description: 'data-node-7 crossed the high disk watermark (85%). Shards will not allocate here.',
+      description:
+        'data-node-7 crossed the high disk watermark (85%). Shards will not allocate here.',
       severity: 'error',
       cta: { link: '/app/management/data/index_management', linkText: 'Manage indices' },
     }),
@@ -107,7 +109,9 @@ export const seedDemoNotifications = async (
       summary.rejectionMessage = 'unexpectedly accepted an unregistered type';
     } catch (err) {
       summary.rejectionMessage = (err as Error).message;
-      logger.debug(`Demo seed rejected an unregistered type as expected: ${summary.rejectionMessage}`);
+      logger.debug(
+        `Demo seed rejected an unregistered type as expected: ${summary.rejectionMessage}`
+      );
     }
   }
 

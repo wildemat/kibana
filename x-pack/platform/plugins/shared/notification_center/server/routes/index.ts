@@ -18,10 +18,7 @@ import {
   type ReadState,
 } from '../read_state';
 import { READ_KEY, READ_ALL_BEFORE_KEY } from '../user_storage';
-import type {
-  NotificationCenterPluginStart,
-  NotificationCenterStartDependencies,
-} from '../types';
+import type { NotificationCenterPluginStart, NotificationCenterStartDependencies } from '../types';
 
 /** Ceiling mirrors the userStorage `read` schema so a `set` never fails validation. */
 const MAX_READ_IDS = 500;
@@ -160,7 +157,9 @@ export const registerNotificationRoutes = (core: NotificationCenterCore, logger:
 
       const current = await client.get<string[]>(READ_KEY);
       // Newest ids appended last; trim from the front so the 500-id cap keeps the most recent.
-      const merged = [...new Set([...current, ...request.body.notificationIds])].slice(-MAX_READ_IDS);
+      const merged = [...new Set([...current, ...request.body.notificationIds])].slice(
+        -MAX_READ_IDS
+      );
       await client.set<string[]>(READ_KEY, merged);
 
       return response.ok({ body: { read: merged.length } });

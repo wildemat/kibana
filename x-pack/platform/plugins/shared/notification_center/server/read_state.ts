@@ -8,11 +8,7 @@
 import type { IUserStorageClient } from '@kbn/core-user-storage-common';
 import type { Notification } from '../common/types';
 import type { NotificationGroup } from './query_notifications';
-import {
-  READ_ALL_BEFORE_KEY,
-  READ_KEY,
-  READ_ALL_BEFORE_DEFAULT,
-} from './user_storage';
+import { READ_ALL_BEFORE_KEY, READ_KEY, READ_ALL_BEFORE_DEFAULT } from './user_storage';
 
 /** Per-user read-state resolved from user storage. */
 export interface ReadState {

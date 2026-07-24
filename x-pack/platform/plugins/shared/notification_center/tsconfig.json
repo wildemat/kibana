@@ -8,6 +8,7 @@
   "kbn_references": [
     "@kbn/core",
     "@kbn/config-schema",
+    "@kbn/i18n",
     "@kbn/zod",
     "@kbn/std",
     "@kbn/core-data-streams-server",

@@ -23,8 +23,8 @@ export const severityDisplay = (severity: Severity): SeverityDisplay => {
     case 'critical':
       return {
         color: 'danger',
-        iconType: 'error',
-        label: i18n.translate('notificationCenter.severity.critical', {
+        iconType: 'errorFilled',
+        label: i18n.translate('xpack.notificationCenter.severity.critical', {
           defaultMessage: 'Critical',
         }),
       };
@@ -32,20 +32,24 @@ export const severityDisplay = (severity: Severity): SeverityDisplay => {
       return {
         color: 'danger',
         iconType: 'error',
-        label: i18n.translate('notificationCenter.severity.error', { defaultMessage: 'Error' }),
+        label: i18n.translate('xpack.notificationCenter.severity.error', {
+          defaultMessage: 'Error',
+        }),
       };
     case 'warning':
       return {
         color: 'warning',
         iconType: 'warning',
-        label: i18n.translate('notificationCenter.severity.warning', { defaultMessage: 'Warning' }),
+        label: i18n.translate('xpack.notificationCenter.severity.warning', {
+          defaultMessage: 'Warning',
+        }),
       };
     case 'info':
     default:
       return {
         color: 'primary',
-        iconType: 'iInCircle',
-        label: i18n.translate('notificationCenter.severity.info', { defaultMessage: 'Info' }),
+        iconType: 'info',
+        label: i18n.translate('xpack.notificationCenter.severity.info', { defaultMessage: 'Info' }),
       };
   }
 };

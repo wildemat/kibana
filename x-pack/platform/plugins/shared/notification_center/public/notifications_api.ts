@@ -24,9 +24,14 @@ export interface ListParams {
   severity?: Severity[];
 }
 
+export interface NotificationCounts {
+  unreadCount: number;
+  total: number;
+}
+
 export interface NotificationsApi {
   list(params?: ListParams): Promise<NotificationListResponse>;
-  unreadCount(): Promise<number>;
+  counts(): Promise<NotificationCounts>;
   markRead(notificationIds: string[]): Promise<void>;
   markAllRead(): Promise<void>;
 }
@@ -43,13 +48,10 @@ export const createNotificationsApi = (http: HttpStart): NotificationsApi => ({
       },
     }),
 
-  unreadCount: async () => {
-    const { unreadCount } = await http.get<{ unreadCount: number }>(
-      `${BASE}/notifications/_unread_count`,
-      { version: API_VERSION }
-    );
-    return unreadCount;
-  },
+  counts: () =>
+    http.get<NotificationCounts>(`${BASE}/notifications/_unread_count`, {
+      version: API_VERSION,
+    }),
 
   markRead: async (notificationIds: string[]) => {
     await http.post(`${BASE}/notifications/_mark_read`, {

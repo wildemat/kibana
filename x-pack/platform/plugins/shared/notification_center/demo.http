@@ -1,0 +1,170 @@
+# Notification Center live demo requests — NOT COMMITTED, local scratch.
+#
+# REST Client format (Cursor/VS Code "REST Client" extension): click
+# "Send Request" above any entry. Run LOGIN first — it sets the session
+# cookie the extension reuses for every later request against this host,
+# which is what makes the mark-read entries hit the SAME user profile the
+# browser badge reads (plain Basic auth has no profile and mutations 403).
+#
+# Target a BASIC-AUTH instance (serverless :5601 default; for stateful,
+# start it with --license basic and change @host).
+
+@host = http://localhost:5601
+@apiVersion = 1
+
+### LOGIN — run me first (session cookie for the elastic profile)
+POST {{host}}/internal/security/login
+kbn-xsrf: true
+x-elastic-internal-origin: Kibana
+content-type: application/json
+
+{
+  "providerType": "basic",
+  "providerName": "basic",
+  "currentURL": "{{host}}/",
+  "params": { "username": "elastic_serverless", "password": "changeme" }
+}
+
+### Seed the standard variety (all severities, both kinds, 3 namespaces)
+POST {{host}}/internal/notification_center/_demo/seed
+kbn-xsrf: true
+x-elastic-internal-origin: Kibana
+elastic-api-version: {{apiVersion}}
+
+### Seed with an UNREGISTERED type → registry rejection, live
+POST {{host}}/internal/notification_center/_demo/seed?invalid=true
+kbn-xsrf: true
+x-elastic-internal-origin: Kibana
+elastic-api-version: {{apiVersion}}
+
+### Live-submit: custom STATE notification (edit fields freely mid-demo)
+POST {{host}}/internal/notification_center/_demo/submit
+kbn-xsrf: true
+x-elastic-internal-origin: Kibana
+elastic-api-version: {{apiVersion}}
+content-type: application/json
+
+{
+  "namespace": "elasticsearch",
+  "type": "diskWatermark",
+  "kind": "state",
+  "input": {
+    "entity": "data-node-42",
+    "state": "high",
+    "title": "Disk usage high on data-node-42",
+    "description": "data-node-42 crossed the high disk watermark (85%).",
+    "severity": "warning",
+    "cta": { "link": "/app/management/data/index_management", "linkText": "Manage indices" }
+  }
+}
+
+### Live-submit: RE-PUSH the same state (same entity+state → same id → still ONE row, stays read)
+POST {{host}}/internal/notification_center/_demo/submit
+kbn-xsrf: true
+x-elastic-internal-origin: Kibana
+elastic-api-version: {{apiVersion}}
+content-type: application/json
+
+{
+  "namespace": "elasticsearch",
+  "type": "diskWatermark",
+  "kind": "state",
+  "input": {
+    "entity": "data-node-42",
+    "state": "high",
+    "title": "Disk usage high on data-node-42",
+    "description": "data-node-42 REMAINS above the high watermark (87%) — re-pushed by the producer.",
+    "severity": "warning",
+    "cta": { "link": "/app/management/data/index_management", "linkText": "Manage indices" }
+  }
+}
+
+### Live-submit: STATE CHANGE (same entity, new state → NEW id → arrives unread)
+POST {{host}}/internal/notification_center/_demo/submit
+kbn-xsrf: true
+x-elastic-internal-origin: Kibana
+elastic-api-version: {{apiVersion}}
+content-type: application/json
+
+{
+  "namespace": "elasticsearch",
+  "type": "diskWatermark",
+  "kind": "state",
+  "input": {
+    "entity": "data-node-42",
+    "state": "flood_stage",
+    "title": "Disk flood stage on data-node-42",
+    "description": "data-node-42 crossed the flood-stage watermark (95%). Indices are read-only.",
+    "severity": "critical",
+    "cta": { "link": "/app/management/data/index_management", "linkText": "Manage indices" }
+  }
+}
+
+### Live-submit: TIMESERIES occurrence (every send = a new notification)
+POST {{host}}/internal/notification_center/_demo/submit
+kbn-xsrf: true
+x-elastic-internal-origin: Kibana
+elastic-api-version: {{apiVersion}}
+content-type: application/json
+
+{
+  "namespace": "reporting",
+  "type": "exportReady",
+  "kind": "timeseries",
+  "input": {
+    "event": "live-demo-export-{{$timestamp}}",
+    "epochMs": {{$timestamp}}000,
+    "title": "Your live-demo export is ready",
+    "description": "Submitted from the demo.http file during the presentation.",
+    "severity": "info",
+    "cta": { "link": "/app/management/insightsAndAlerting/reporting", "linkText": "Open Reporting" }
+  }
+}
+
+### Live-submit: schema rejection (off-origin CTA link → Zod open-redirect guard, 400)
+POST {{host}}/internal/notification_center/_demo/submit
+kbn-xsrf: true
+x-elastic-internal-origin: Kibana
+elastic-api-version: {{apiVersion}}
+content-type: application/json
+
+{
+  "namespace": "elasticsearch",
+  "type": "diskWatermark",
+  "kind": "state",
+  "input": {
+    "entity": "data-node-9",
+    "state": "high",
+    "title": "Evil CTA",
+    "description": "This should be rejected by the write schema.",
+    "severity": "info",
+    "cta": { "link": "https://example.com/phish", "linkText": "Click me" }
+  }
+}
+
+### List notifications (annotated with isRead)
+GET {{host}}/internal/notification_center/notifications?perPage=50
+x-elastic-internal-origin: Kibana
+elastic-api-version: {{apiVersion}}
+
+### Unread + total counts (feeds the bell dot and flyout header)
+GET {{host}}/internal/notification_center/notifications/_unread_count
+x-elastic-internal-origin: Kibana
+elastic-api-version: {{apiVersion}}
+
+### Mark ONE read (replace the id from a list response)
+POST {{host}}/internal/notification_center/notifications/_mark_read
+kbn-xsrf: true
+x-elastic-internal-origin: Kibana
+elastic-api-version: {{apiVersion}}
+content-type: application/json
+
+{
+  "notificationIds": ["elasticsearch:diskWatermark:data-node-42:high"]
+}
+
+### Mark ALL read (stamps readAllBefore, clears read[])
+POST {{host}}/internal/notification_center/notifications/_mark_all_read
+kbn-xsrf: true
+x-elastic-internal-origin: Kibana
+elastic-api-version: {{apiVersion}}

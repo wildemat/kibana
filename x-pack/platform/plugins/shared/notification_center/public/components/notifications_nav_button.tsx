@@ -5,13 +5,12 @@
  * 2.0.
  */
 
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import moment from 'moment';
 import {
   EuiHeaderSectionItemButton,
-  EuiNotificationBadge,
   EuiIcon,
-  EuiFlyout,
+  EuiFlyoutResizable,
   EuiFlyoutHeader,
   EuiFlyoutBody,
   EuiTitle,
@@ -22,11 +21,14 @@ import {
   EuiFlexItem,
   EuiLink,
   EuiButtonEmpty,
-  EuiFilterGroup,
-  EuiFilterButton,
+  EuiButtonIcon,
+  EuiCheckbox,
+  EuiSelect,
+  EuiSwitch,
   EuiEmptyPrompt,
   EuiLoadingSpinner,
   EuiIconTip,
+  EuiToolTip,
 } from '@elastic/eui';
 import { i18n } from '@kbn/i18n';
 import type { ApplicationStart, IBasePath } from '@kbn/core/public';
@@ -44,12 +46,18 @@ export interface NotificationsNavButtonProps {
   basePath: IBasePath;
 }
 
-/** Registry `display_name` for a `(namespace, type)`, falling back to the raw type. */
-const typeDisplayName = (namespace: string, type: string): string => {
+/** Registry display metadata for a `(namespace, type)`, falling back to the raw type. */
+const typeDisplay = (namespace: string, type: string): { name: string; description?: string } => {
   const namespaceDef = (
-    NOTIFICATION_REGISTRY as Record<string, { types: Record<string, { display_name: string }> }>
+    NOTIFICATION_REGISTRY as Record<
+      string,
+      { types: Record<string, { display_name: string; description: string }> }
+    >
   )[namespace];
-  return namespaceDef?.types?.[type]?.display_name ?? type;
+  const typeDef = namespaceDef?.types?.[type];
+  return typeDef
+    ? { name: typeDef.display_name, description: typeDef.description }
+    : { name: type };
 };
 
 const NotificationRow: React.FC<{
@@ -59,6 +67,7 @@ const NotificationRow: React.FC<{
   onMarkRead: (id: string) => void;
 }> = ({ item, application, basePath, onMarkRead }) => {
   const severity = severityDisplay(item.severity);
+  const type = typeDisplay(item.namespace, item.type);
   return (
     <EuiPanel hasBorder paddingSize="s" color={item.isRead ? 'subdued' : 'plain'}>
       <EuiFlexGroup gutterSize="s" responsive={false} alignItems="flexStart">
@@ -72,7 +81,14 @@ const NotificationRow: React.FC<{
         </EuiFlexItem>
         <EuiFlexItem>
           <EuiText size="xs" color="subdued">
-            {typeDisplayName(item.namespace, item.type)} · {moment(item['@timestamp']).fromNow()}
+            {type.description ? (
+              <EuiToolTip content={type.description}>
+                <span>{type.name}</span>
+              </EuiToolTip>
+            ) : (
+              type.name
+            )}{' '}
+            · {moment(item['@timestamp']).fromNow()}
           </EuiText>
           <EuiText size="s">
             <strong>{item.title}</strong>
@@ -85,13 +101,20 @@ const NotificationRow: React.FC<{
           ) : null}
         </EuiFlexItem>
         <EuiFlexItem grow={false}>
-          {item.isRead ? null : (
+          {item.isRead ? (
+            <EuiText size="xs" color="subdued">
+              <EuiIcon type="check" size="s" />{' '}
+              {i18n.translate('xpack.notificationCenter.row.readLabel', {
+                defaultMessage: 'Read',
+              })}
+            </EuiText>
+          ) : (
             <EuiButtonEmpty
               size="xs"
               iconType="check"
               onClick={() => onMarkRead(item.notification_id)}
             >
-              {i18n.translate('notificationCenter.row.markReadLabel', {
+              {i18n.translate('xpack.notificationCenter.row.markReadLabel', {
                 defaultMessage: 'Mark read',
               })}
             </EuiButtonEmpty>
@@ -108,15 +131,20 @@ export const NotificationsNavButton: React.FC<NotificationsNavButtonProps> = ({
   basePath,
 }) => {
   const [unreadCount, setUnreadCount] = useState(0);
+  const [totalCount, setTotalCount] = useState(0);
   const [isOpen, setIsOpen] = useState(false);
   const [items, setItems] = useState<NotificationListItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [unreadOnly, setUnreadOnly] = useState(false);
   const [severityFilter, setSeverityFilter] = useState<Severity[]>([]);
+  const [sortField, setSortField] = useState<'time' | 'severity'>('time');
+  const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('desc');
 
-  const refreshCount = useCallback(async () => {
+  const refreshCounts = useCallback(async () => {
     try {
-      setUnreadCount(await api.unreadCount());
+      const { unreadCount: unread, total } = await api.counts();
+      setUnreadCount(unread);
+      setTotalCount(total);
     } catch {
       // Badge is best-effort; a failed poll should not surface an error toast.
     }
@@ -136,10 +164,15 @@ export const NotificationsNavButton: React.FC<NotificationsNavButtonProps> = ({
   }, [api, unreadOnly, severityFilter]);
 
   useEffect(() => {
-    refreshCount();
-    const timer = window.setInterval(refreshCount, REFRESH_INTERVAL_MS);
+    refreshCounts();
+    const timer = window.setInterval(() => {
+      refreshCounts();
+      if (isOpen) {
+        refreshList();
+      }
+    }, REFRESH_INTERVAL_MS);
     return () => window.clearInterval(timer);
-  }, [refreshCount]);
+  }, [refreshCounts, refreshList, isOpen]);
 
   useEffect(() => {
     if (isOpen) {
@@ -148,8 +181,8 @@ export const NotificationsNavButton: React.FC<NotificationsNavButtonProps> = ({
   }, [isOpen, refreshList]);
 
   const afterMutation = useCallback(async () => {
-    await Promise.all([refreshList(), refreshCount()]);
-  }, [refreshList, refreshCount]);
+    await Promise.all([refreshList(), refreshCounts()]);
+  }, [refreshList, refreshCounts]);
 
   const onMarkRead = useCallback(
     async (id: string) => {
@@ -172,7 +205,19 @@ export const NotificationsNavButton: React.FC<NotificationsNavButtonProps> = ({
     );
   }, []);
 
-  const bellLabel = i18n.translate('notificationCenter.bell.ariaLabel', {
+  // The list route returns newest-first; re-sorting happens client-side because
+  // the whole filtered page is already in memory.
+  const sortedItems = useMemo(() => {
+    const sign = sortDirection === 'asc' ? 1 : -1;
+    return [...items].sort((a, b) => {
+      if (sortField === 'severity') {
+        return (SEVERITIES.indexOf(a.severity) - SEVERITIES.indexOf(b.severity)) * sign;
+      }
+      return a['@timestamp'].localeCompare(b['@timestamp']) * sign;
+    });
+  }, [items, sortField, sortDirection]);
+
+  const bellLabel = i18n.translate('xpack.notificationCenter.bell.ariaLabel', {
     defaultMessage: 'Notifications',
   });
 
@@ -181,21 +226,26 @@ export const NotificationsNavButton: React.FC<NotificationsNavButtonProps> = ({
       <EuiHeaderSectionItemButton
         aria-label={bellLabel}
         aria-expanded={isOpen}
-        notification={unreadCount > 0 ? unreadCount : undefined}
+        notification={unreadCount > 0 ? true : undefined}
         onClick={() => setIsOpen((open) => !open)}
       >
         <EuiIcon type="bell" size="m" />
-        {unreadCount > 0 ? <EuiNotificationBadge>{unreadCount}</EuiNotificationBadge> : null}
       </EuiHeaderSectionItemButton>
 
       {isOpen ? (
-        <EuiFlyout size="s" onClose={() => setIsOpen(false)} aria-labelledby="ncFlyoutTitle">
+        <EuiFlyoutResizable
+          size={520}
+          minWidth={420}
+          maxWidth={900}
+          onClose={() => setIsOpen(false)}
+          aria-labelledby="ncFlyoutTitle"
+        >
           <EuiFlyoutHeader hasBorder>
             <EuiFlexGroup alignItems="center" gutterSize="s">
               <EuiFlexItem>
                 <EuiTitle size="s">
                   <h2 id="ncFlyoutTitle">
-                    {i18n.translate('notificationCenter.flyout.title', {
+                    {i18n.translate('xpack.notificationCenter.flyout.title', {
                       defaultMessage: 'Notifications',
                     })}
                   </h2>
@@ -203,32 +253,79 @@ export const NotificationsNavButton: React.FC<NotificationsNavButtonProps> = ({
               </EuiFlexItem>
               <EuiFlexItem grow={false}>
                 <EuiButtonEmpty size="s" iconType="checkInCircleFilled" onClick={onMarkAllRead}>
-                  {i18n.translate('notificationCenter.flyout.markAllReadLabel', {
+                  {i18n.translate('xpack.notificationCenter.flyout.markAllReadLabel', {
                     defaultMessage: 'Mark all as read',
                   })}
                 </EuiButtonEmpty>
               </EuiFlexItem>
             </EuiFlexGroup>
+            <EuiText size="s" color="subdued">
+              {i18n.translate('xpack.notificationCenter.flyout.countsSummary', {
+                defaultMessage: '{unread} unread · {total} total',
+                values: { unread: unreadCount, total: totalCount },
+              })}
+            </EuiText>
             <EuiSpacer size="s" />
-            <EuiFilterGroup>
-              <EuiFilterButton
-                hasActiveFilters={unreadOnly}
-                onClick={() => setUnreadOnly((value) => !value)}
-              >
-                {i18n.translate('notificationCenter.filter.unreadOnly', {
-                  defaultMessage: 'Unread only',
-                })}
-              </EuiFilterButton>
+            <EuiFlexGroup alignItems="center" gutterSize="m" responsive={false} wrap>
+              <EuiFlexItem grow={false}>
+                <EuiSwitch
+                  compressed
+                  label={i18n.translate('xpack.notificationCenter.filter.unreadOnly', {
+                    defaultMessage: 'Unread only',
+                  })}
+                  checked={unreadOnly}
+                  onChange={() => setUnreadOnly((value) => !value)}
+                />
+              </EuiFlexItem>
               {SEVERITIES.map((severity) => (
-                <EuiFilterButton
-                  key={severity}
-                  hasActiveFilters={severityFilter.includes(severity)}
-                  onClick={() => toggleSeverity(severity)}
-                >
-                  {severityDisplay(severity).label}
-                </EuiFilterButton>
+                <EuiFlexItem grow={false} key={severity}>
+                  <EuiCheckbox
+                    id={`ncSeverityFilter-${severity}`}
+                    label={severityDisplay(severity).label}
+                    checked={severityFilter.includes(severity)}
+                    onChange={() => toggleSeverity(severity)}
+                  />
+                </EuiFlexItem>
               ))}
-            </EuiFilterGroup>
+            </EuiFlexGroup>
+            <EuiSpacer size="s" />
+            <EuiFlexGroup alignItems="center" gutterSize="s" responsive={false}>
+              <EuiFlexItem grow={false}>
+                <EuiSelect
+                  compressed
+                  prepend={i18n.translate('xpack.notificationCenter.sort.label', {
+                    defaultMessage: 'Sort by',
+                  })}
+                  options={[
+                    {
+                      value: 'time',
+                      text: i18n.translate('xpack.notificationCenter.sort.time', {
+                        defaultMessage: 'Time',
+                      }),
+                    },
+                    {
+                      value: 'severity',
+                      text: i18n.translate('xpack.notificationCenter.sort.severity', {
+                        defaultMessage: 'Severity',
+                      }),
+                    },
+                  ]}
+                  value={sortField}
+                  onChange={(event) => setSortField(event.target.value as 'time' | 'severity')}
+                />
+              </EuiFlexItem>
+              <EuiFlexItem grow={false}>
+                <EuiButtonIcon
+                  iconType={sortDirection === 'asc' ? 'sortUp' : 'sortDown'}
+                  aria-label={i18n.translate('xpack.notificationCenter.sort.directionAriaLabel', {
+                    defaultMessage: 'Toggle sort direction',
+                  })}
+                  onClick={() =>
+                    setSortDirection((direction) => (direction === 'asc' ? 'desc' : 'asc'))
+                  }
+                />
+              </EuiFlexItem>
+            </EuiFlexGroup>
           </EuiFlyoutHeader>
           <EuiFlyoutBody>
             {isLoading ? (
@@ -238,21 +335,21 @@ export const NotificationsNavButton: React.FC<NotificationsNavButtonProps> = ({
                 iconType="bell"
                 title={
                   <h3>
-                    {i18n.translate('notificationCenter.flyout.emptyTitle', {
+                    {i18n.translate('xpack.notificationCenter.flyout.emptyTitle', {
                       defaultMessage: 'Nothing to see here',
                     })}
                   </h3>
                 }
                 body={
                   <p>
-                    {i18n.translate('notificationCenter.flyout.emptyBody', {
+                    {i18n.translate('xpack.notificationCenter.flyout.emptyBody', {
                       defaultMessage: 'You have no notifications matching these filters.',
                     })}
                   </p>
                 }
               />
             ) : (
-              items.map((item) => (
+              sortedItems.map((item) => (
                 <React.Fragment key={item.notification_id}>
                   <NotificationRow
                     item={item}
@@ -265,7 +362,7 @@ export const NotificationsNavButton: React.FC<NotificationsNavButtonProps> = ({
               ))
             )}
           </EuiFlyoutBody>
-        </EuiFlyout>
+        </EuiFlyoutResizable>
       ) : null}
     </>
   );

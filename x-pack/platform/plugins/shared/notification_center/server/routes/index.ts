@@ -10,13 +10,7 @@ import { ReservedPrivilegesSet, type CoreSetup, type Logger } from '@kbn/core/se
 import { SEVERITIES } from '../../common/notification_schema';
 import type { Severity } from '../../common/types';
 import { queryNotifications, type NotificationGroup } from '../query_notifications';
-import {
-  annotateReadState,
-  getReadState,
-  stampInitialReadAllBefore,
-  DEFAULT_READ_STATE,
-  type ReadState,
-} from '../read_state';
+import { annotateReadState, getReadState, DEFAULT_READ_STATE, type ReadState } from '../read_state';
 import { READ_KEY, READ_ALL_BEFORE_KEY } from '../user_storage';
 import type { NotificationCenterPluginStart, NotificationCenterStartDependencies } from '../types';
 
@@ -95,12 +89,10 @@ export const registerNotificationRoutes = (core: NotificationCenterCore, logger:
 
       const [{ userStorage }] = await core.getStartServices();
       const client = userStorage.asScoped(request);
-      // The list load is where a first-time user's marker is stamped, so the
-      // whole backlog does not arrive unread. A plain count must never mutate.
-      let state: ReadState = DEFAULT_READ_STATE;
-      if (client) {
-        state = await stampInitialReadAllBefore(client, await getReadState(client));
-      }
+      // Demo branch: the stage-3 first-call stamp (stampInitialReadAllBefore) is
+      // not wired up, so the seeded backlog stays visibly unread for every fresh
+      // browser profile instead of being auto-read on the first flyout open.
+      const state: ReadState = client ? await getReadState(client) : DEFAULT_READ_STATE;
 
       const annotated = annotateReadState(groups, state);
       const filtered = unread ? annotated.filter(({ isRead }) => !isRead) : annotated;
@@ -127,8 +119,9 @@ export const registerNotificationRoutes = (core: NotificationCenterCore, logger:
       // Shares the exact annotation path with the list route, but never stamps.
       const state = client ? await getReadState(client) : DEFAULT_READ_STATE;
 
-      const unreadCount = annotateReadState(groups, state).filter(({ isRead }) => !isRead).length;
-      return response.ok({ body: { unreadCount } });
+      const annotated = annotateReadState(groups, state);
+      const unreadCount = annotated.filter(({ isRead }) => !isRead).length;
+      return response.ok({ body: { unreadCount, total: annotated.length } });
     }
   );
 

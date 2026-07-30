@@ -17,7 +17,7 @@ type ForType = NotificationCenterPluginSetup['forType'];
  * type: the real contract is compile-time-bound to registered refs, so the
  * rejection path can only be exercised behind a cast.
  */
-type LooseForType = (ref: { namespace: string; type: string; kind: NotificationKind }) => {
+export type LooseForType = (ref: { namespace: string; type: string; kind: NotificationKind }) => {
   submit: (input: Record<string, unknown>) => Promise<SubmitNotificationResult>;
 };
 

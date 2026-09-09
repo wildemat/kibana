@@ -41,18 +41,18 @@ apiTest.describe('Notification Center - unread count', { tag: [...tags.stateful.
   apiTest('tracks read-state transitions', async ({ apiClient }) => {
     const initial = await h.getUnreadCount(apiClient);
     expect(initial).toHaveStatusCode(200);
-    expect(initial.body).toStrictEqual({ unreadCount: 2 });
+    expect(initial.body).toStrictEqual({ unreadCount: 2, capped: false });
 
     expect(await h.markRead(apiClient, { notification_id: 'unread-count-a' })).toHaveStatusCode(
       200
     );
     const afterMarkRead = await h.getUnreadCount(apiClient);
     expect(afterMarkRead).toHaveStatusCode(200);
-    expect(afterMarkRead.body).toStrictEqual({ unreadCount: 1 });
+    expect(afterMarkRead.body).toStrictEqual({ unreadCount: 1, capped: false });
 
     expect(await h.markAllRead(apiClient)).toHaveStatusCode(200);
     const afterMarkAllRead = await h.getUnreadCount(apiClient);
     expect(afterMarkAllRead).toHaveStatusCode(200);
-    expect(afterMarkAllRead.body).toStrictEqual({ unreadCount: 0 });
+    expect(afterMarkAllRead.body).toStrictEqual({ unreadCount: 0, capped: false });
   });
 });

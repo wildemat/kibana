@@ -180,17 +180,68 @@ list route **annotates** each item with `isRead` and returns the same order to e
 ### Unread count
 
 `GET /internal/notification_center/notifications/_unread_count` returns
-`{ unreadCount: number }` for the caller's profile-scoped read state. It accepts no query
-parameters and counts the same newest collapsed representative for each `notification_id` that
-the list route uses. The endpoint requests only `notification_id` and `@timestamp` from
+`{ unreadCount: number, capped: boolean }` for the caller's profile-scoped read state. It accepts
+no query parameters and counts the same newest collapsed representative for each `notification_id`
+that the list route uses. The endpoint requests only `notification_id` and `@timestamp` from
 Elasticsearch and evaluates read state in the application.
 
 The first unread-count request initializes `readAllBefore` through the same path as the list, so
 inherited backlog does not appear as unread. A caller without a user profile receives `403`; a
 user-storage read or initialization failure returns `500` rather than a misleading zero.
 
-The count is bounded to the newest 1,000 collapsed representatives. If more groups exist,
-`unreadCount` is therefore a floor rather than the complete total.
+The count is capped at `UNREAD_COUNT_CAP` (99). `capped: true` means the real total is higher and
+the badge should render `99+`.
+
+#### Sized for polling
+
+This endpoint is the badge's only freshness signal, so it is deliberately cheaper than the list
+route rather than a variation on it:
+
+- `readAllBefore` is pushed into the query as `range: { '@timestamp': { gt: readAllBefore } }`.
+  Backing indices that predate the marker are dropped in the `can_match` phase, so a user who
+  caught up recently searches recent shards instead of the whole 180-day retention window. This
+  encodes the read-state invariant that nothing at or before the marker can be unread; overrides
+  only ever postdate the marker, so none are lost to the filter.
+- The page is `UNREAD_COUNT_CAP + overrideCount + 1` collapsed groups, not the list route's 1,000.
+  Each collapsed group is a distinct `notification_id`, so at most `overrideCount` of them can turn
+  out to be read, and overrides are usually empty (`_mark_all_read` clears them). The `+ 1`
+  distinguishes "exactly the cap" from "more than the cap".
+
+Reintroducing an uncapped or exact total means paying the fetch and parse cost per poll, per user;
+prefer raising `UNREAD_COUNT_CAP` over removing it.
+
+### Client integration: the bell badge (not yet built)
+
+Freshness is **poll-only**. `submit()` is a server setup-contract method, usually called from a
+task-manager task on an arbitrary Kibana node; the public and server halves of this plugin are
+separate bundles in separate processes, and Kibana core has no server-to-browser push channel.
+There is no way for a write to invalidate a React Query cache key in a user's browser.
+
+SSE (`@kbn/sse-utils-server`) does not change this. An SSE connection is pinned to the node that
+accepted it, so a `submit()` on another node still needs a cross-node bus to reach the subscriber.
+That moves the polling to the server and adds a long-lived connection per tab per user.
+
+The intended client shape:
+
+```ts
+useQuery({
+  queryKey: ['notificationCenter', 'unreadCount'],
+  refetchInterval: 60_000,
+  // Hidden tabs stop polling; focus makes the badge feel fresh on return.
+  refetchIntervalInBackground: false,
+  refetchOnWindowFocus: true,
+});
+```
+
+- Invalidate `['notificationCenter', 'unreadCount']` after `_mark_read` and `_mark_all_read`. Those
+  are the user's own actions and cover most badge transitions with no polling latency.
+- Render ``capped ? `${unreadCount}+` : unreadCount``; treat `0` as no badge.
+- A `403` means the caller has no user profile and never will on this session: stop polling rather
+  than retrying. A `500` is a user-storage failure and is worth a bounded retry, but the badge
+  should stay hidden rather than showing `0`.
+- Polling this endpoint is what stamps a new user's `readAllBefore`, so the bell mounting silently
+  marks the inherited backlog read. Anything the user should actually see must be submitted after
+  their first page load.
 
 ## Submitting notifications (`forType`)
 

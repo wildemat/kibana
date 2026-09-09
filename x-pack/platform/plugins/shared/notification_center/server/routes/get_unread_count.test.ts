@@ -127,6 +127,6 @@ describe('GET /internal/notification_center/notifications/_unread_count', () => 
     await handler({} as never, httpServerMock.createKibanaRequest({ method: 'get' }), response);
 
     expect(client.set).toHaveBeenCalledWith(READ_ALL_BEFORE_KEY, '2026-07-20T00:00:00.000Z');
-    expect(response.ok).toHaveBeenCalledWith({ body: { unreadCount: 0 } });
+    expect(response.ok).toHaveBeenCalledWith({ body: { unreadCount: 0, capped: false } });
   });
 });

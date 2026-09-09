@@ -94,7 +94,9 @@ export interface NotificationQueryResult {
   truncated: boolean;
 }
 
-/** The bounded unread count for the caller's profile-scoped notification state. */
+/** The capped unread count for the caller's profile-scoped notification state. */
 export interface NotificationUnreadCount {
   unreadCount: number;
+  /** `true` when the real total exceeds `unreadCount`, so the badge should render `${unreadCount}+`. */
+  capped: boolean;
 }

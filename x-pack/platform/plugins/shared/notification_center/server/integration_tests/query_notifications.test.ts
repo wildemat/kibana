@@ -169,7 +169,7 @@ describe('queryNotifications [integration]', () => {
     );
 
     // `dup` has two source documents but contributes one unread representative.
-    expect(result).toEqual({ unreadCount: 2 });
+    expect(result).toEqual({ unreadCount: 2, capped: false });
   });
 
   it('leaves items unannotated when there is no read state', async () => {

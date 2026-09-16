@@ -48,6 +48,8 @@
     "es": "node scripts/es",
     "preinstall": "node ./preinstall_check",
     "kbn": "node scripts/kbn",
+    "kbn-dev": "bash scripts/kbn_dev.sh",
+    "kbn-dev-ctl": "bash scripts/kbn_dev_ctl.sh",
     "lint": "yarn run lint:es && yarn run lint:style",
     "lint:es": "node scripts/eslint_all_files",
     "lint:oxc": "node scripts/lint",
